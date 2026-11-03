@@ -1,0 +1,16 @@
+{
+  "retrieved": "2026-10-24",
+  "sources": {
+    "signal.svg": "https://signal.org/assets/images/favicon/favicon.svg",
+    "brave.svg": "https://brave.com/static-assets/images/brave-logo-sans-text.svg",
+    "proton-mail.svg": "https://pmecdn.protonweb.com/image-transformation/?s=c&image=image/upload/v1776940263/static/logos/mail/mail-badge.svg",
+    "nextcloud.png": "https://nextcloud.com/c/uploads/2022/03/favicon.png",
+    "whatsapp.svg": "https://static.whatsapp.net/rsrc.php/y1/r/FJbTMJqMap7.svg",
+    "chrome.svg": "https://www.google.com/chrome/static/images/chrome-logo-m100.svg",
+    "gmail.svg": "https://www.gstatic.com/images/branding/productlogos/gmail_2026/v2/web/192px.svg",
+    "drive.svg": "https://www.gstatic.com/images/branding/productlogos/drive_2026/v2/web/192px.svg",
+    "docs.svg": "https://www.gstatic.com/images/branding/productlogos/docs_2026/v2/web/192px.svg",
+    "onlyoffice.webp": "https://static-site.onlyoffice.com/public/images/favicons/favicon150.png",
+    "nextcloud.svg": "https://nextcloud.com/c/uploads/2022/08/nextcloud-logo-icon.svg"
+  }
+}

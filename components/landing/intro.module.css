@@ -1,0 +1,47 @@
+.intro{position:relative;display:flex;flex-direction:column;isolation:isolate;min-height:850px;height:100svh;max-height:1200px;background:var(--paper);padding:126px 4.5% 0;overflow:hidden}
+.copy{position:relative;z-index:4;width:min(850px,100%);margin:0 auto;text-align:center}
+.eyebrow{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--purple);font-size:13px;letter-spacing:.025em;margin:0 0 12px}
+.eyebrow>span{height:5px;width:5px;flex-shrink:0;border-radius:50%;background:var(--orange);box-shadow:0 0 0 5px #f16e0010}
+.copy h1{font-size:clamp(52px,5.2vw,82px);font-weight:500;line-height:1.2;letter-spacing:-.055em;margin:0 0 13px}
+.copy h1>span{display:inline-block;margin-inline:5px}
+:global([lang=ar]) .copy h1{font-size:clamp(58px,6vw,88px);line-height:1.25}
+.orange{color:var(--orange)}
+.description{max-width:730px;margin:0 auto;color:#626d7b;font-size:14px;line-height:1.9;text-wrap:balance}
+.scene{position:absolute;inset:0;z-index:1;pointer-events:none}
+.mountain{position:absolute;inset-inline:-3%;bottom:-1%;width:106%;height:88%;transform-origin:44% 100%}
+.mountainBody{position:absolute;inset:0;background:#062759;mask-image:url('/hero/mountain-navy.webp');mask-size:100% 100%;mask-position:center;mask-repeat:no-repeat;-webkit-mask-image:url('/hero/mountain-navy.webp');-webkit-mask-size:100% 100%;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat}
+.mountainDrawing{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+
+.flagArrival{transform-origin:736px 220px}
+.flagCloth{transform-origin:739px 168px}
+.foregroundMist{position:absolute;inset-inline:-5%;bottom:0;height:31%;background:linear-gradient(0deg,var(--paper) 0%,var(--paper) 28%,#f2efe990 52%,transparent 100%);pointer-events:none}
+.windField{position:absolute;left:-4%;width:108%;top:44%;height:48%;overflow:visible;pointer-events:none}
+.windDrift{animation:windDrift 12s ease-in-out infinite}
+.windHaze{filter:blur(8px);opacity:.4}
+.exploreWrap{position:absolute;bottom:88px;left:50%;translate:-50% 0;z-index:5;display:flex;align-items:center;gap:14px}
+.explore{display:inline-flex;align-items:center;gap:26px;border-radius:100px;background:var(--navy);color:var(--paper);border:1px solid var(--navy);font-size:12px;padding:8px 12px 8px 22px;min-height:50px;white-space:nowrap;transition:background .25s,transform .25s,box-shadow .25s}
+:global([dir=rtl]) .explore{padding:8px 22px 8px 12px}
+.explore>span:last-child{display:grid;place-items:center;width:31px;height:31px;border:1px solid #f2efe950;border-radius:50%;font-size:18px}
+.explore:hover{background:var(--purple);box-shadow:0 8px 25px #56247420;transform:translateY(-2px)}
+.scrollHint{font-size:10px;color:#7d8187;white-space:nowrap}
+.bottom{position:absolute;bottom:0;inset-inline:4.5%;height:65px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid #06275916;color:#747b83}
+.bottom>p{margin:0;font-size:10px;line-height:1.7;text-align:center}
+.location{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--navy);white-space:nowrap}.location>i{width:5px;height:5px;border-radius:50%;background:var(--orange)}.edition{font-size:9px;letter-spacing:.08em;white-space:nowrap}
+.intro[data-ready=true] .copy{animation:copyAppear 1.1s .15s ease-out both}
+.intro[data-ready=true] .mountain{animation:mountainReveal 2s .15s cubic-bezier(.2,.65,.25,1) both}
+.intro[data-ready=true] .flagArrival{animation:plantFlag .8s 1.15s ease-out both}
+.intro[data-ready=true] .windField{animation:windAppear 2.4s .5s ease-out both}
+.intro[data-active=false] .windDrift{animation-play-state:paused}
+@keyframes mountainReveal{from{opacity:0;transform:translateY(40px) scale(1.035);filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes plantFlag{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes windDrift{0%,100%{transform:translate(-15px,0)}50%{transform:translate(18px,-6px)}}
+@keyframes windAppear{from{opacity:0;transform:translateX(-75px)}to{opacity:1;transform:none}}
+@keyframes copyAppear{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(min-width:1600px){.intro{padding-top:130px}.copy h1{font-size:88px}:global([lang=ar]) .copy h1{font-size:98px}.description{font-size:16px}}
+@media(min-width:801px) and (max-height:800px){.intro{min-height:800px;padding-top:112px}.copy h1,:global([lang=ar]) .copy h1{font-size:68px}.description{font-size:13px}.mountain{height:72%}.eyebrow{font-size:11px}}
+@media(max-width:800px){.intro{height:100svh;min-height:740px;max-height:none;padding:114px 6% 0}.copy{max-width:540px}.eyebrow{font-size:11px;margin-bottom:12px}.copy h1{font-size:clamp(37px,8.3vw,58px);line-height:1.2;letter-spacing:-.05em;margin-bottom:15px}:global([lang=ar]) .copy h1{font-size:clamp(43px,10.3vw,70px);line-height:1.3}.copy h1>span{margin-inline:3px}.description{font-size:12px;line-height:1.9;max-width:410px}.mountain{inset-inline:auto;left:50%;translate:-50% 0;width:min(170%,860px);height:auto;aspect-ratio:1672/941;bottom:clamp(50px,calc(650px - 106vw),23%)}.flagArrival{scale:1.25}.foregroundMist{bottom:12%;height:22%}.windField{top:47%;height:37%;left:-28%;width:155%}.exploreWrap{bottom:78px;gap:0}.explore{min-height:46px;padding-block:6px;font-size:11px}.scrollHint{display:none}.bottom{height:57px;inset-inline:6%;gap:8px;flex-wrap:wrap;align-content:center;padding-block:8px}.location{font-size:8px}.edition{font-size:8px;margin-inline-start:auto}.bottom>p{order:2;width:100%;font-size:8px}}
+@media(max-width:360px){.description{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.intro *{animation:none!important;transition:none!important}.intro[data-ready=true] .mountain,.intro[data-ready=true] .flagArrival,.intro[data-ready=true] .windField{transform:none!important;opacity:1!important;filter:none!important}}
+
+
+

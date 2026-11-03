@@ -1,0 +1,13 @@
+.identity{position:absolute;inset-block-start:142px;inset-inline-start:5.5%;z-index:6;width:clamp(310px,27vw,410px);color:var(--navy);text-align:start}
+.eyebrow{font-size:12px;line-height:1.7;color:var(--purple);margin:0 0 12px}
+.identity h1{font-size:clamp(26px,2.3vw,36px);font-weight:500;line-height:1.4;letter-spacing:-.025em;margin:0 0 16px;text-wrap:balance}
+.description{font-size:16px;line-height:1.95;color:#4d5c70;margin:0;text-wrap:pretty}
+@media(min-width:1200px){
+  :global([lang=en]) .identity{position:relative;inset:auto;display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:8px 48px;align-items:center;width:min(1120px,100%);margin:0 auto}
+  :global([lang=en]) .eyebrow{grid-column:1;grid-row:1;margin:0}
+  :global([lang=en]) .identity h1{grid-column:1;grid-row:2;margin:0}
+  :global([lang=en]) .description{grid-column:2;grid-row:1 / span 2}
+}
+@media(max-width:1199px){.identity{position:relative;inset:auto;width:min(720px,100%);margin:0 auto;text-align:center}.eyebrow{margin-bottom:7px;font-size:11px}.identity h1{font-size:28px;margin-bottom:10px}.description{font-size:15px;line-height:1.85}}
+@media(max-width:800px){.identity{width:min(560px,100%)}.eyebrow{font-size:10px}.identity h1{font-size:25px;margin-bottom:9px}.description{font-size:14px;line-height:1.85}}
+@media(max-width:360px){.identity h1{font-size:23px}.description{font-size:13px}}

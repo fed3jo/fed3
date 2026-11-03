@@ -1,0 +1,14 @@
+.root{position:relative;flex:1;min-height:0;width:calc(100% + 9vw);margin:0 -4.5vw;z-index:1;isolation:isolate;background:#f2efe9}
+.canvas{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none}
+.root[data-renderer=webgl] .canvas{opacity:1}
+.preview{position:absolute;inset:0;z-index:2;pointer-events:none}.preview picture,.preview img{display:block;width:100%;height:100%}.preview img{object-fit:fill}
+.horizon{position:absolute;inset:auto -10% 0;height:16%;z-index:3;background:linear-gradient(0deg,#f2efe9 0%,#f2efe9b8 30%,transparent);pointer-events:none}
+.wind{position:absolute;inset:47% -5% auto;z-index:4;width:110%;height:38%;pointer-events:none;stroke:url(#terrain-wind);stroke-width:.8}
+.wind>g{animation:wind 13s ease-in-out infinite}
+.pointerArea{position:absolute;inset:0 0 72px;z-index:5;touch-action:pan-y;cursor:auto}
+.root[data-active=false] *{animation-play-state:paused}
+@keyframes wind{50%{transform:translate(30px,-9px)}}
+@media(min-width:1200px){:global([lang=en]) .root{margin-top:24px}}
+@media(max-width:1199px){.root{margin-top:8px}}
+@media(max-width:800px){.root{width:calc(100% + 12vw);margin:8px -6vw 0}.pointerArea{bottom:65px}.wind{top:52%;height:30%}}
+@media(prefers-reduced-motion:reduce){.root *{animation:none!important;transition:none!important}}

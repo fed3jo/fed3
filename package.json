@@ -1,0 +1,33 @@
+{
+  "name": "fed3",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "playwright test --project=unit",
+    "test:browser": "playwright test --project=chromium",
+    "verify:assets": "node scripts/verify-assets.mjs",
+    "prepare:standalone": "node scripts/prepare-standalone.mjs"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.8.2",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "^0.187.0",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
