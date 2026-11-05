@@ -8,6 +8,9 @@ const config: NextConfig = {
     return [{ source: '/Fed3_Frame_240/:path*', headers: [
       { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
       { key: 'X-Content-Type-Options', value: 'nosniff' },
+    ] }, { source: '/videos/:path*', headers: [
+      { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
     ] }];
   },
 };

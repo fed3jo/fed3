@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'connection', { configurable: true, value: { effectiveType: '4g', downlink: 10, saveData: false } });
     localStorage.setItem('fed3-locale', location.pathname.startsWith('/en') ? 'en' : 'ar');
     sessionStorage.setItem('fed3-mode', 'simple');
   });
@@ -11,6 +12,7 @@ test('the home uses a native cursor and the plain stone background without secur
   await page.goto('/ar/');
   const terrain = page.locator('[data-terrain]');
   await expect(terrain).toHaveAttribute('data-renderer', 'webgl');
+  await expect(terrain).toHaveAttribute('data-shape', 'spheres');
   await page.mouse.move(490, 450);
   await expect(terrain).toHaveCSS('background-color', 'rgb(242, 239, 233)');
   await expect(terrain.locator('[class*=pointerArea]')).toHaveCSS('cursor', 'auto');
@@ -64,7 +66,7 @@ test('a lost WebGL context restores the mountain fallback', async ({ page }) => 
   await terrain.locator('canvas').evaluate(canvas => canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
   await expect(terrain).toHaveAttribute('data-renderer', 'fallback');
   await expect(page.locator('[data-particle-preview] img')).toBeVisible();
-  await expect(page.getByRole('img', { name: /Digital Navy/ })).toBeVisible();
+  await expect(page.getByRole('img', { name: /Fed3/ })).toBeVisible();
 });
 
 test('spheres move away from a stationary pointer and return after it leaves', async ({ page }) => {

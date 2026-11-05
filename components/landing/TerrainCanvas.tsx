@@ -127,7 +127,7 @@ function TerrainScene({ reduced, input, locale, onReady, onUnavailable }: Props)
 
 export default function TerrainCanvas(props: Props) {
   return <TerrainBoundary onUnavailable={props.onUnavailable}>
-    <Canvas orthographic camera={{ position: [0, 3.8, 14], zoom: 75, near: .1, far: 50 }} dpr={[1, 1.5]} flat
+    <Canvas orthographic camera={{ position: [0, 3.8, 14], zoom: 75, near: .1, far: 50 }} dpr={[1, 1.25]} flat
       frameloop={!props.active ? 'never' : props.reduced ? 'demand' : 'always'}
       gl={{ alpha: true, antialias: true, powerPreference: 'low-power' }} fallback={null}>
       <TerrainScene {...props} />

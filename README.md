@@ -1,6 +1,18 @@
 # Fed3
 
-Arabic and English landing page for the Digital Sovereignty Initiative. It uses the supplied PNG sequence, semantic station copy, a single canvas and a native-scroll GSAP timeline.
+Arabic and English landing page for the Digital Sovereignty Initiative. The home page uses native scrolling, an interactive WebGL mountain of navy and orange spheres with a matching static fallback, and three station video slots. All three stations include bundled, responsive videos. The home page does not load the 240-frame sequence or GSAP. Wheel scrolling uses the bundled Lenis script, loaded after the page is idle; touch scrolling remains native, and reduced-motion preferences disable smoothing.
+
+## Station videos
+
+The alternatives video uses versioned H.264 MP4 files: 720p (488,767 bytes), 360p (142,649 bytes) and a WebP cover (13,324 bytes). Both videos have their audio removed, start metadata before video data, and one-second keyframe intervals. A lazy cover remains visible until at least 15% of the station enters the viewport below the header. The silent video then starts automatically and loops while the station is visible. Mobile and constrained connections use 360p. Playback pauses when leaving the station or hiding the tab, and resumes on return. A small pause control allows visitors to stop motion manually. If the browser blocks autoplay, a play control is available.
+
+The local-cloud station has 720p (404,004 bytes), 360p (100,883 bytes), and a cover (12,354 bytes). The communities station has 720p (446,411 bytes), 360p (145,353 bytes), and a cover (16,618 bytes). All stations use the same automatic playback and pause behavior.
+
+Set the three `NEXT_PUBLIC_FED3_*_VIDEO_URL` variables listed in `.env.example` in `.env.local` before building to use direct HTTPS video file URLs. A blank station URL keeps its bundled video. A configured URL overrides both local renditions for that station. Optional cover images and WebVTT captions can be configured in `lib/fed3/videos.ts`. Version files placed in `public/videos/` because that directory receives immutable cache headers; publish replacements at new URLs.
+
+The WebGL mountain loads after the page load event and an idle opportunity. When the browser reports 3G, 2G, data saving or downlink below 1.8 Mbps, the static preview stays visible until the visitor enables 3D. Fonts use WOFF2. See [media performance checks](docs/media-performance.md) for the measured network profile and its limits.
+
+Run the focused home-page checks with `npx playwright test tests/video-stations.browser.spec.ts --project=chromium` against a running production server. The sequence-specific checks and sequence implementation notes below describe the retained frame-based implementation, which the home page no longer imports.
 
 ## Project baseline
 

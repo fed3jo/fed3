@@ -20,17 +20,18 @@ export function terrainPoint(radius: number, angle: number): [number, number, nu
 }
 export type TerrainInput = { x: number; y: number; clientX: number; clientY: number; hover: boolean; scroll: number; impulse: number };
 
-export function buildTerrainSpheres() {
+export function buildTerrainSpheres(compact = false) {
   const coordinates: number[] = [], radii: number[] = [];
-  for (let ring = 0; ring <= 62; ring++) {
-    const radius = ring / 62 * 1.19, count = Math.max(1, Math.round(radius * 255));
+  const rings = compact ? 32 : 50, density = compact ? 140 : 210;
+  for (let ring = 0; ring <= rings; ring++) {
+    const radius = ring / rings * 1.19, count = Math.max(1, Math.round(radius * density));
     for (let i = 0; i < count; i++) {
       const angle = (i + (ring % 2) * .5) / count * Math.PI * 2;
       const point = terrainPoint(radius, angle);
       const variation = Math.sin(i * 12.9898 + ring * 78.233) * 43758.5453;
       const noise = variation - Math.floor(variation);
       point[1] += (noise - .5) * .025;
-      coordinates.push(...point); radii.push(.044 + noise * .014);
+      coordinates.push(...point); radii.push((compact ? .079 : .054) + noise * .015);
     }
   }
   return { base: new Float32Array(coordinates), radii: new Float32Array(radii) };

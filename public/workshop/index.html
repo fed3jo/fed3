@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>ورشة السيادة الرقمية للشباب | Fed3</title>
+  <style>
+    @font-face{font-family:Plex;src:url("../fonts/plex-arabic-regular.woff2") format("woff2");font-display:swap}
+    @font-face{font-family:Plex;src:url("../fonts/plex-arabic-medium.woff2") format("woff2");font-weight:600;font-display:swap}
+    :root{color-scheme:light;--navy:#062759;--stone:#f2efe9;--orange:#a74300;--rule:#d6cdc1}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--stone);color:var(--navy);font-family:Plex,Arial,sans-serif}
+    body[data-tone="dark"]{color-scheme:dark;--surface:#062759;--ink:#fff;--sub:#e2eaf4;--accent:#ffbc85;--line:#4d6a8f}
+    body{--surface:var(--stone);--ink:var(--navy);--sub:#354963;--accent:var(--orange);--line:var(--rule);background:var(--surface);color:var(--ink)}
+    a{color:inherit}
+    a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+    .shell{width:min(100%,91rem);min-height:100svh;margin:auto;padding:clamp(1rem,4vw,4rem);display:flex;flex-direction:column;gap:1.4rem}
+    header,footer,.actions,.controls{display:flex;align-items:center;gap:.65rem 1rem;flex-wrap:wrap}
+    header,footer{justify-content:space-between;border-block-end:1px solid var(--line);padding-block-end:1rem}
+    footer{border:0;border-block-start:1px solid var(--line);padding-block:1rem 0}
+    .brand{font-size:1.55rem;font-weight:600;direction:ltr}
+    #section{font-weight:600;color:var(--accent)}
+    main{display:grid;align-content:center;flex:1;min-height:0}
+    h1,h2,p,figure,ul{margin:0}
+    h1{font-size:clamp(2.15rem,5.1vw,5rem);font-weight:600;line-height:1.18;margin-block-end:clamp(1.3rem,3vw,3rem);text-wrap:balance}
+    h1:focus{outline:none}
+    h2{font-size:clamp(1.35rem,2.6vw,2.5rem);font-weight:600}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(1.5rem,5vw,5rem)}
+    .layout:not(:has(figure:not([hidden]))){grid-template-columns:minmax(0,1fr)}
+    .cover h1{font-size:clamp(3rem,6.4vw,6rem);margin-block-end:.8rem}
+    .cover p{font-size:clamp(1.15rem,2vw,1.65rem);color:var(--sub);margin-block-start:.6rem}
+    li{padding-inline-start:.35em;margin-block-end:.62em;font-size:clamp(1.22rem,2.25vw,2rem);line-height:1.45}
+    ul{padding-inline-start:1.15em}
+    li::marker{color:var(--accent)}
+    figure{min-width:0}
+    figure img{display:block;width:100%;max-height:47svh;object-fit:contain;border-radius:.35rem}
+    figcaption{margin-block-start:.6rem;text-align:center;color:var(--sub);font-size:.9rem}
+    .callout{margin-block-start:1.45rem;border-block-start:1px solid var(--line);padding-block-start:1.05rem;color:var(--accent);font-weight:600;font-size:clamp(1.35rem,2.65vw,2.4rem)}
+    .actions{margin-block-start:1.2rem}
+    .actions a{font-size:1rem;color:var(--accent);text-underline-offset:.25em}
+    button{font:inherit;cursor:pointer;color:inherit;background:transparent;border:1px solid var(--line);padding:.4rem .85rem;border-radius:.35rem}
+    button:hover:not(:disabled){border-color:var(--accent)}
+    button:disabled{opacity:.44;cursor:default}
+    #watch{background:var(--ink);color:var(--surface);font-weight:600}
+    #count{font-variant-numeric:tabular-nums;color:var(--sub);direction:ltr}
+    details{color:var(--sub);font-size:.94rem}
+    details p{max-width:76ch;margin-block-start:.55rem}
+    dialog{width:min(58rem,calc(100% - 2rem));border:1px solid var(--line);border-radius:.45rem;padding:1rem;background:var(--surface);color:var(--ink)}
+    dialog::backdrop{background:#071222db}
+    video{display:block;width:100%;max-height:74svh;background:#000;margin-block:.75rem 0}
+    [hidden]{display:none!important}
+    @media(max-width:800px){
+      .layout{grid-template-columns:1fr;gap:1.35rem}
+      figure img{max-height:30svh}
+      .shell{gap:1.1rem}
+      li{margin-block-end:.4em}
+    }
+    @media(min-width:801px) and (max-height:790px){
+      .shell{padding-block:1.5rem;gap:1rem}
+      h1{font-size:clamp(2.4rem,6.7vh,3.7rem);margin-block-end:1.4rem}
+      li{font-size:clamp(1.3rem,3.5vh,1.75rem);margin-block-end:.45em}
+      figure img{max-height:43svh}
+    }
+    @media(prefers-reduced-motion:no-preference){a,button{transition:border-color .14s ease}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <span id="section"></span>
+      <span class="brand" lang="en">Fed3</span>
+    </header>
+    <main id="slide" aria-label="الشريحة الحالية">
+      <div class="layout">
+        <div>
+          <h1 id="title" tabindex="-1"></h1>
+          <h2 id="subtitle" hidden></h2>
+          <p id="intro" hidden></p>
+          <ul id="points"></ul>
+          <p id="callout" class="callout" hidden></p>
+          <div class="actions">
+            <button type="button" id="watch" hidden>شاهد فيديو المحطة</button>
+            <a id="site" target="_blank" rel="noopener" hidden></a>
+            <a id="resource" target="_blank" rel="noopener" hidden></a>
+          </div>
+        </div>
+        <figure id="visual" hidden>
+          <img id="image" alt="">
+          <figcaption id="caption"></figcaption>
+        </figure>
+      </div>
+    </main>
+    <details id="notes"><summary>ملاحظات الميسّر</summary><p id="note"></p></details>
+    <footer>
+      <nav class="controls" aria-label="التنقّل بين الشرائح">
+        <button id="prev" type="button">السابقة</button>
+        <button id="next" type="button">التالية</button>
+        <span id="count" role="status"></span>
+      </nav>
+      <button id="full" type="button">ملء الشاشة</button>
+    </footer>
+  </div>
+  <dialog id="player" aria-label="فيديو المحطة">
+    <form method="dialog"><button>إغلاق الفيديو</button></form>
+    <video id="video" controls playsinline preload="metadata"></video>
+  </dialog>
+  <script>
+    const slides = [
+  {
+    "type": "cover",
+    "section": "Fed3  /  رواد التنمية",
+    "title": "بياناتك. قرارك.",
+    "body": [
+      "ورشة السيادة الرقمية للشباب",
+      "اختيار البدائل وتجربة Nextcloud"
+    ],
+    "caption": "الصفحة الرئيسية لمبادرة Fed3",
+    "notes": "اعرض الصفحة الرئيسية العربية للمبادرة واسأل من يقرر أين نحفظ صورنا وملفاتنا. الورشة لاثني عشر مشاركًا ومدتها ثلاث ساعات.",
+    "img": "home"
+  },
+  {
+    "type": "split",
+    "section": "السيادة الرقمية",
+    "title": "من يقرّر من يفتح ملفك؟",
+    "body": [
+      "أين تُحفَظ بياناتي؟",
+      "من يدير الخدمة؟ ومن يستطيع الوصول؟",
+      "كيف آخذ نسخة إذا أردت تغيير الأداة؟"
+    ],
+    "caption": "لقطة من لعبة «بكرا الافتتاح»",
+    "notes": "١٥–٤٠ دقيقة. استخدم مثال جدول المتطوعين الذي يتضمن أرقام الهواتف. اطلب من الثنائيات الاختيار بين رابط لأي شخص ومشاركة للقراءة مع حساب بعينه. افتح لعبة بكرا الافتتاح من /ar/alternatives/ في نسخة الموقع المتاحة للعرض.",
+    "img": "game",
+    "site": [
+      "/ar/alternatives/",
+      "افتح لعبة «بكرا الافتتاح» من صفحة البدائل"
+    ]
+  },
+  {
+    "type": "split",
+    "section": "المحطة الأولى",
+    "title": "خمسة بدائل لخمس حاجات",
+    "body": [
+      "المراسلة  |  Signal",
+      "التصفّح  |  Brave",
+      "البريد  |  Proton Mail",
+      "الملفات  |  Nextcloud",
+      "المستندات  |  ONLYOFFICE"
+    ],
+    "caption": "دليل التطبيقات البديلة في موقع Fed3",
+    "notes": "افتح صفحة البدائل وقارن تطبيقين يؤديان الوظيفة نفسها. اطلب من المشاركين النظر في الأذونات والتكلفة وطريقة تصدير بياناتهم. استخدم الفيديو مقدمة صامتة قصيرة.",
+    "img": "alternatives",
+    "site": [
+      "/ar/alternatives/",
+      "افتح دليل البدائل"
+    ],
+    "video": "alternatives"
+  },
+  {
+    "type": "split",
+    "section": "تطبيق عملي  /  20 دقيقة",
+    "title": "ثبّت بديلًا وجرّبه",
+    "body": [
+      "اختر بديلًا قبل تمرين Nextcloud.",
+      "ثبّت التطبيق من رابط الناشر الرسمي.",
+      "نفّذ مهمة صغيرة ببيانات تدريبية.",
+      "أخبر زميلك بما أعجبك وما قيّدك."
+    ],
+    "caption": "صفحة Signal في موقع Fed3",
+    "notes": "٤٠–٧٥ دقيقة تشمل المقارنة ثم ٢٠ دقيقة للتثبيت والتجربة. استخدم روابط الناشرين من دليل البدائل. اقترح على المشاركين فحص Brave Shields أو إرسال رسالة Signal لزميل موافق أو إنشاء مستند تجريبي على الحاسوب.",
+    "img": "signal",
+    "site": [
+      "/ar/apps/signal/",
+      "افتح صفحة Signal"
+    ]
+  },
+  {
+    "type": "split",
+    "section": "المحطة الثانية",
+    "title": "أين يعمل Nextcloud؟",
+    "body": [
+      "ملفاتك على خادم يديره فريق أو مزوّد تختاره.",
+      "تطبيق الهاتف أو الحاسوب يتصل بعنوان الخادم.",
+      "سنستخدم عنوانًا وحسابات تدريبية يوفّرها الفريق."
+    ],
+    "caption": "مخطط الوصول في دليل السحابة المحلية",
+    "notes": "اعرض صفحة السحابة المحلية واشرح الفرق بين موقع Fed3 والخادم الذي يحتفظ بالملفات. اعرض مثال السحابة داخل المؤسسة واذكر دور المسؤول في التحديث والصلاحيات والنسخ الاحتياطي.",
+    "img": "cloud",
+    "site": [
+      "/ar/home-cloud/",
+      "افتح دليل السحابة المحلية"
+    ],
+    "video": "home-cloud"
+  },
+  {
+    "type": "split",
+    "section": "مختبر Nextcloud  /  60 دقيقة",
+    "title": "من التثبيت إلى أول ملف",
+    "body": [
+      "ثبّت تطبيق الملفات المناسب لجهازك.",
+      "أدخل عنوان HTTPS التدريبي وسجّل الدخول.",
+      "أنشئ مجلد «تدريب Fed3» وارفع ملفًا تجريبيًا."
+    ],
+    "caption": "رسم الاستخدام اليومي من دليل السحابة",
+    "notes": "٨٥–١٤٥ دقيقة لهذه الشريحة والتي تليها. لكل مشارك حساب مستقل. استخدم المتصفح أو جهاز إعارة إن تعذّر التثبيت. تدرّب على جهازين قبل الجلسة وسجّل المسار الذي أكمله كل مشارك.",
+    "img": "files",
+    "link": [
+      "تنزيل Nextcloud من المصدر الرسمي",
+      "https://nextcloud.com/install/"
+    ]
+  },
+  {
+    "type": "feature",
+    "section": "مختبر Nextcloud  /  تمرين ثنائي",
+    "title": "شارك الملف ثم ألغِ الوصول",
+    "body": [
+      "شارك مع حساب زميلك بصلاحية القراءة.",
+      "اطلب منه فتح الملف والتأكد من الصلاحية.",
+      "ألغِ المشاركة واطلب منه تجربة الرابط أو المجلد مرة أخرى."
+    ],
+    "callout": "هل يستطيع فتح الملف بعد إلغاء المشاركة؟",
+    "notes": "استخدم ملفًا تجريبيًا. في حال عرض رابط عام، اختر القراءة واضبط كلمة مرور أو انتهاء إذا سمح الخادم، ثم اختبره وألغِه. النسخة التي نزّلها المستلم قد تبقى لديه.",
+    "link": [
+      "دليل مشاركة الملفات | Nextcloud",
+      "https://docs.nextcloud.com/server/latest/user_manual/en/files/sharing.html"
+    ]
+  },
+  {
+    "type": "split",
+    "section": "المحطة الثالثة  /  خلال 7 أيام",
+    "title": "انشر المبادرة وعلّم شخصين",
+    "body": [
+      "شارك تعريفًا بالمبادرة مع مجموعتك.",
+      "خصّص نحو 15 دقيقة لكل شخص تعرفه.",
+      "اعرض التنزيل ودعه يجرّب خطوة بنفسه.",
+      "بلّغ الفريق بالعدد وما تعلّمته من التجربة."
+    ],
+    "caption": "محطة المجتمعات الرقمية في موقع Fed3",
+    "notes": "١٤٥–١٧٠ دقيقة. اطلب من كل مشارك اختيار شخصين وتحضير شرح قصير. شارك بطاقة المبادرة أو الرابط المعتمد، وتجنّب تداول بيانات الدخول. هدف الأسبوع ٢٤ شخصًا مختلفًا إذا علّم كل مشارك شخصين. ميّز التعريف عن التجربة العملية.",
+    "img": "community",
+    "video": "communities"
+  },
+  {
+    "type": "feature",
+    "section": "ختام الورشة",
+    "title": "ماذا أصبحت قادرًا أن تفعل؟",
+    "body": [
+      "أقارن تطبيقًا ببديل وأشرح سبب اختياري.",
+      "أرفع ملفًا وأحدّد من يستطيع فتحه.",
+      "أشرح لشخصين كيف يبدأان مع Nextcloud."
+    ],
+    "callout": "أي خطوة ستجرّبها مع أول شخص؟",
+    "notes": "١٧٠–١٨٠ دقيقة. أعد سؤالَي مكان حفظ الملف والوصول إليه. سجّل نتائج التثبيت والرفع والمشاركة والإلغاء وحدد موعد متابعة بعد سبعة أيام."
+  }
+];
+
+    const get = (id) => document.getElementById(id);
+    const player = get("player");
+    const video = get("video");
+    const fromHash = () => {
+      const value = Number(location.hash.slice(1));
+      return Number.isInteger(value) && value >= 1 && value <= slides.length ? value - 1 : 0;
+    };
+    let current = fromHash();
+
+    function showText(id, value) {
+      const element = get(id);
+      element.textContent = value ?? "";
+      element.hidden = !value;
+    }
+
+    function showLink(id, link) {
+      const element = get(id);
+      element.hidden = !link;
+      if (!link) return;
+      const [label, url] = link;
+      element.textContent = label;
+      element.href = url;
+    }
+
+    function render(focus = false) {
+      const slide = slides[current];
+      const cover = slide.type === "cover";
+      const hasSite = location.protocol !== "file:" && slide.site;
+      document.body.dataset.tone = cover || slide.type === "feature" ? "dark" : "light";
+      get("slide").classList.toggle("cover", cover);
+      get("section").textContent = slide.section;
+      get("title").textContent = slide.title;
+      showText("subtitle", cover && slide.body[0]);
+      showText("intro", cover && slide.body[1]);
+      showText("callout", slide.callout);
+      const points = get("points");
+      points.hidden = cover;
+      points.replaceChildren(...(cover ? [] : slide.body.map((text) => {
+        const item = document.createElement("li");
+        item.textContent = text;
+        return item;
+      })));
+      get("watch").hidden = !slide.video;
+      showLink("site", hasSite && [slide.site[1], slide.site[0]]);
+      showLink("resource", slide.link);
+      get("visual").hidden = !slide.img;
+      if (slide.img) {
+        const image = get("image");
+        image.src = "media/" + slide.img + ".jpg";
+        image.alt = slide.caption;
+        get("caption").textContent = slide.caption;
+      }
+      get("notes").open = false;
+      get("note").textContent = slide.notes;
+      get("prev").disabled = current === 0;
+      get("next").disabled = current === slides.length - 1;
+      get("count").textContent = (current + 1) + " / " + slides.length;
+      if (focus) get("title").focus({ preventScroll: true });
+    }
+
+    function go(index) {
+      if (index < 0 || index >= slides.length || index === current) return;
+      current = index;
+      history.replaceState(null, "", "#" + (index + 1));
+      render(true);
+    }
+
+    get("prev").addEventListener("click", () => go(current - 1));
+    get("next").addEventListener("click", () => go(current + 1));
+    window.addEventListener("hashchange", () => {
+      current = fromHash();
+      render(true);
+    });
+    get("full").hidden = !document.fullscreenEnabled;
+    get("full").addEventListener("click", async () => {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    });
+    document.addEventListener("fullscreenchange", () => {
+      get("full").textContent = document.fullscreenElement ? "الخروج من ملء الشاشة" : "ملء الشاشة";
+    });
+    get("watch").addEventListener("click", () => {
+      const clip = slides[current].video;
+      video.src = "../videos/" + clip + "-v1-720p.mp4";
+      video.poster = "../videos/" + clip + "-v1-poster.webp";
+      player.showModal();
+      video.play().catch(() => {});
+    });
+    player.addEventListener("close", () => {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (player.open || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const moves = { ArrowLeft: current + 1, PageDown: current + 1, ArrowRight: current - 1, PageUp: current - 1, Home: 0, End: slides.length - 1 };
+      if (!(event.key in moves)) return;
+      event.preventDefault();
+      go(moves[event.key]);
+    });
+    render();
+  </script>
+</body>
+</html>
