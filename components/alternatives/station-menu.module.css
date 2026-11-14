@@ -1,0 +1,28 @@
+.stations,.sectionHeading{display:none}
+.sections{display:contents}
+@media(max-width:800px){
+  .panel{padding:18px;gap:18px;max-height:calc(100dvh - 108px);overflow-y:auto;overscroll-behavior:contain;animation:menuEnter .2s ease-out;scrollbar-width:thin}
+  .stations{display:block}
+  .heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 4px 12px;color:var(--purple);font-size:11px;font-weight:500}
+  .heading>span{font-size:9px;letter-spacing:.08em;color:#677588}
+  .stationList{display:grid;gap:8px}
+  .panel .station{display:flex;align-items:center;gap:10px;padding:13px 11px;min-height:76px;border:1px solid #06275912;border-radius:16px;background:#06275903;color:var(--navy);text-decoration:none;white-space:normal;transition:background .2s,border-color .2s}
+  .panel .station:hover{background:#56247409;border-color:#56247430}
+  .number{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:#5624740c;color:var(--purple);font-size:10px}
+  .stationCopy{display:grid;gap:5px;min-width:0;flex:1}
+  .stationCopy>span{font-size:12px;line-height:1.65;font-weight:500}
+  .stationCopy>small{font-size:10px;line-height:1.7;color:#677588}
+  .here{font-size:9px;white-space:nowrap}
+  .station>svg{flex:0 0 17px;width:17px;height:17px}
+  .panel .station[aria-current=page]{background:var(--navy);border-color:var(--navy);color:var(--paper)}
+  .station[aria-current=page] .number{background:var(--orange);color:var(--navy)}
+  .station[aria-current=page] small{color:#f2efe9b8}
+  .sections{display:flex;flex-direction:column;gap:4px;border-top:1px solid #06275912;padding-top:16px}
+  .sectionHeading{display:flex;margin-bottom:4px}
+  .panel .sections>a{font-size:12px;min-height:42px}
+  .toggle span{transition:transform .2s ease,opacity .2s ease}
+  .toggle[aria-expanded=true] span:first-child{transform:translateY(3px) rotate(45deg)}
+  .toggle[aria-expanded=true] span:last-child{transform:translateY(-3px) rotate(-45deg)}
+}
+@keyframes menuEnter{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.panel{animation:none}.panel .station,.toggle span{transition:none}}

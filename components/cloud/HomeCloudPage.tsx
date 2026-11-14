@@ -42,7 +42,7 @@ export function HomeCloudPage({ locale }: { locale: Locale }) {
   return <div className={`${shared.page} ${styles.page}`} onClick={anchorClick}>
     <SmoothScrolling enabled={ready && !reduce} />
     <a className={shared.skip} href="#cloud-main">{locale === 'ar' ? 'انتقل إلى المحتوى' : 'Skip to content'}</a>
-    <AlternativesHeader locale={locale} languageHref={`/${locale === 'ar' ? 'en' : 'ar'}/home-cloud/`} inDirectory navItems={cloudNav(locale)} navigationId="cloud-navigation" />
+    <AlternativesHeader locale={locale} languageHref={`/${locale === 'ar' ? 'en' : 'ar'}/home-cloud/`} inDirectory navItems={cloudNav(locale)} navigationId="cloud-navigation" currentStation="home-cloud" />
     <main id="cloud-main" tabIndex={-1}>
       <CloudGuideHero locale={locale} />
       <div className={styles.promiseStrip}>{c.strip.map((item, i) => <span key={item}><small>0{i + 1}</small><FeatureIcon name={['control','people','backup'][i]} size={20} />{item}</span>)}</div>

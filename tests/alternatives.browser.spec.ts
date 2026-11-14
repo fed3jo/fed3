@@ -112,6 +112,9 @@ test('local floating navigation, single appearance and Lenis lifecycle work toge
   await menu.click();
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#alternatives-navigation')).toBeVisible();
+  const stations = page.locator('#alternatives-navigation').getByRole('group', { name: 'محطات المبادرة' });
+  expect(await stations.locator('a').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')))).toEqual(['/ar/alternatives/', '/ar/home-cloud/', '/ar/communities/']);
+  await expect(stations.locator('[aria-current="page"]')).toHaveAttribute('href', '/ar/alternatives/');
   await page.keyboard.press('Escape');
   await expect(menu).toBeFocused();
   await expect(page.locator('#alternatives-navigation')).toBeHidden();
@@ -125,7 +128,8 @@ test('local floating navigation, single appearance and Lenis lifecycle work toge
     const destroy = previous.destroy.bind(previous);
     previous.destroy = () => { (window as unknown as { previousLenisDestroyed: boolean }).previousLenisDestroyed = true; destroy(); };
   });
-  await page.locator('[data-station="home-cloud"]').click();
+  await menu.click();
+  await stations.locator('a[href="/ar/home-cloud/"]').click();
   await expect(page).toHaveURL(/ar\/home-cloud/);
   await expect.poll(() => page.evaluate(() => (window as unknown as { previousLenisDestroyed: boolean }).previousLenisDestroyed)).toBe(true);
   await expect.poll(() => page.evaluate(() => Boolean(window.fed3Lenis))).toBe(true);
@@ -136,10 +140,10 @@ test('local sections, directional arrows and journey links work in Arabic and En
   for (const locale of ['ar', 'en']) {
     await page.goto(`/${locale}/alternatives/?app=nextcloud#comparison`);
     const nav = page.locator('#alternatives-navigation');
-    expect(await nav.locator('a').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')))).toEqual(['#catalog', '#comparison', '#game']);
+    expect(await nav.locator('a:visible').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')))).toEqual(['#catalog', '#comparison', '#game']);
     await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Drive', 'Nextcloud']);
     await expect(nav.locator('a[href="#comparison"]')).toHaveAttribute('aria-current', 'location');
-    const arrows = page.locator('[data-directional-arrow]');
+    const arrows = page.locator('[data-directional-arrow]:visible');
     expect(await arrows.evaluateAll(nodes => nodes.every(node => getComputedStyle(node).transform === (document.documentElement.dir === 'rtl' ? 'matrix(-1, 0, 0, 1, 0, 0)' : 'none')))).toBe(true);
     const positions = await page.locator('#comparison [data-app-name]').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().x));
     expect(locale === 'ar' ? positions[0] > positions[1] : positions[0] < positions[1]).toBe(true);

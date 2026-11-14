@@ -28,6 +28,7 @@ export function CommunitiesPage({ locale }: { locale: Locale }) {
       inDirectory
       navItems={sections.map((id, i) => ({ id, label: c.nav[i] }))}
       navigationId="communities-navigation"
+      currentStation="communities"
     />
     <main id="communities-main" tabIndex={-1}>
       <section className={styles.hero} aria-labelledby="communities-heading">
