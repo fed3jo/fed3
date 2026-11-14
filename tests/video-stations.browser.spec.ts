@@ -15,10 +15,11 @@ for (const locale of ['ar', 'en']) {
       await expect(station.locator('[data-station-video]')).toBeVisible();
       await expect(station.locator('[data-station-video] img')).toHaveAttribute('src', `/videos/${id}-v1-poster.webp`);
     }
-    await expect(page.locator('[data-terrain]')).toBeVisible();
-    await expect(page.locator('[data-terrain]')).toHaveAttribute('data-renderer', 'webgl');
-    await expect(page.locator('[data-terrain] canvas')).toHaveCount(1);
-    await expect(page.locator('video')).toHaveCount(0);
+    await expect(page.locator('[data-home-intro]')).toBeVisible();
+    await expect(page.locator('[data-home-intro] video')).toHaveCount(1);
+    await expect(page.locator('[data-home-intro] canvas')).toHaveCount(0);
+    await expect(page.locator('[data-terrain]')).toHaveCount(0);
+    await expect(page.locator('video')).toHaveCount(1);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: locale === 'ar' ? 'التنقّل' : 'Navigation', exact: true }).click();
     await page.locator('#main-navigation a[href="#communities"]').click();

@@ -16,10 +16,12 @@ test('3G page paints before five seconds and autoplays the small video only in i
   await session.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 1_600_000 / 8, uploadThroughput: 750_000 / 8, connectionType: 'cellular3g' });
   await session.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   const mediaRequests: string[] = [];
-  page.on('request', request => { if (/\.mp4(?:\?|$)|Fed3_Frame_240/.test(request.url())) mediaRequests.push(request.url()); });
+  page.on('request', request => { if (/\.mp4(?:\?|$)|Fed3_Frame_240/.test(request.url()) && !request.url().includes('fed3-hero-journey')) mediaRequests.push(request.url()); });
   await page.goto('/ar/', { waitUntil: 'networkidle' });
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'تفعيل الجبل ثلاثي الأبعاد' })).toBeVisible();
+  await expect(page.locator('[data-hero-empty-space]')).toBeVisible();
+  await expect(page.locator('[data-home-intro] video')).toHaveCount(1);
+  await expect(page.locator('[data-terrain]')).toHaveCount(0);
   await expect(page.locator('canvas')).toHaveCount(0);
   expect(mediaRequests).toEqual([]);
   const paint = await page.evaluate(() => ({

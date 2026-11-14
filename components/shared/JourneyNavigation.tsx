@@ -12,9 +12,11 @@ export function JourneyNavigation({ locale, current, currentHref }: { locale: Lo
   const labels = messages[locale].nav;
   const title = ar ? 'كمّل رحلتك مع Fed3.' : 'Continue your Fed3 journey.';
   const stationsLabel = ar ? 'محطات المبادرة' : 'Initiative stations';
-  const lead = current === 'home-cloud'
-    ? ar ? 'استكشف البدائل الرقمية والمجتمعات، أو ارجع إلى بداية الرحلة.' : 'Explore digital alternatives and communities, or return to the start of the journey.'
-    : ar ? 'استكشف السحابة المحلية والمجتمعات، أو ارجع إلى بداية الرحلة.' : 'Explore local storage and communities, or return to the start of the journey.';
+  const lead = {
+    alternatives: ar ? 'استكشف السحابة المحلية والمجتمعات، أو ارجع إلى بداية الرحلة.' : 'Explore local storage and communities, or return to the start of the journey.',
+    'home-cloud': ar ? 'استكشف البدائل الرقمية والمجتمعات، أو ارجع إلى بداية الرحلة.' : 'Explore digital alternatives and communities, or return to the start of the journey.',
+    communities: ar ? 'اختَر أداة تجرّبها من دليل البدائل، أو شوف كيف تجهّز سحابة محلية لفريقك.' : 'Choose a tool to try from the alternatives guide, or see how to set up local cloud storage for your team.',
+  }[current];
   return <section id="journey" className={styles.journey} aria-labelledby="journey-heading">
     <div className={styles.journeyIntro}><div><p className={styles.eyebrow}><bdi>Fed3</bdi> / {stationsLabel}</p><h2 id="journey-heading"><InlineText text={title} /></h2><p>{lead}</p></div><Link className={styles.homeButton} href={fed3.routes[locale].home}>{ar ? 'العودة إلى الرئيسية' : 'Back to home'}<DirectionalArrow /></Link></div>
     <nav className={styles.stationCards} aria-label={stationsLabel}>{(['alternatives', 'home-cloud', 'communities'] as const).map((station, index) => {

@@ -18,7 +18,7 @@ test('the masthead is available at the summit and floats when the page scrolls',
   await expect(header.locator('img')).toHaveAttribute('src', /fed3-logo\.svg/);
   await expect(page.getByRole('img', { name: /جبل السيادة الرقمية/ })).toBeVisible();
   await expect(page.locator('[data-terrain]')).toHaveAttribute('data-renderer', 'webgl');
-  await expect(page.locator('#identity-heading')).toHaveText('افهم خياراتك الرقمية');
+  await expect(page.locator('#identity-heading')).toHaveText('مبادرة السيادة الرقمية');
   await page.evaluate(() => window.scrollTo({ top: 200, behavior: 'instant' }));
   await expect(header).toHaveAttribute('data-floating', 'true');
   await expect(header).toHaveCSS('border-top-left-radius', '100px');
@@ -58,7 +58,7 @@ test('the summit and navigation remain readable before JavaScript', async ({ bro
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   await page.goto(`${process.env.TEST_BASE_URL || 'http://127.0.0.1:3000'}/ar/`);
-  await expect(page.locator('#identity-heading')).toHaveText('افهم خياراتك الرقمية');
+  await expect(page.locator('#identity-heading')).toHaveText('مبادرة السيادة الرقمية');
   await expect(page.getByRole('img', { name: /جبل السيادة الرقمية/ })).toBeVisible();
   await expect(page.locator('header').getByRole('link', { name: 'Switch to English' })).toBeVisible();
   await context.close();

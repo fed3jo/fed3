@@ -20,7 +20,7 @@ test('the home uses a native cursor and the plain stone background without secur
   await expect(terrain).not.toContainText('Tracking:');
   await expect(terrain).not.toContainText('Status: Encrypted');
   await expect(terrain.locator('[data-visible], [class*=backdrop]')).toHaveCount(0);
-  await expect(page.locator('[data-initiative-identity]')).toContainText('افهم خياراتك الرقمية');
+  await expect(page.locator('[data-initiative-identity]')).toContainText('مبادرة السيادة الرقمية');
   await expect(page.locator('[data-initiative-identity] [data-logo-part]')).toHaveCount(0);
 });
 

@@ -1,5 +1,12 @@
 export type StationVideoSource = { src: string; mobileSrc?: string; poster?: string; captions?: { src: string; language: 'ar' | 'en'; label: string }[] };
 
+export const heroJourneyVideo = {
+  src: '/videos/fed3-hero-journey-v1-720p.mp4',
+  mobileSrc: '/videos/fed3-hero-journey-v1-360p.mp4',
+  poster: '/videos/fed3-hero-journey-v1-poster.webp',
+  duration: 12,
+};
+
 // Use direct video file URLs, not YouTube or Vimeo page URLs. Rebuild after changing these variables.
 export const stationVideos = {
   alternatives: {

@@ -48,7 +48,7 @@ test('injected download failures retain the available frames and keyboard access
   await page.getByRole('link', { name: 'انتقل إلى المحتوى', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-mode]')).toHaveAttribute('data-mode', 'simple');
-  await expect(page.locator('main h1')).toHaveText('افهم خياراتك الرقمية');
+  await expect(page.locator('main h1')).toHaveText('مبادرة السيادة الرقمية');
   await expect(page.locator('[data-station] h2')).toHaveCount(4);
   await expect(page.locator('canvas[data-frame]')).toHaveCount(0);
   await expect(page.locator('[data-station] img:not(noscript img)')).toHaveCount(4);
@@ -57,7 +57,7 @@ test('injected download failures retain the available frames and keyboard access
   await page.getByRole('link', { name: 'Switch to English' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-  await expect(page.locator('h1')).toHaveText('Understand your digital choices');
+  await expect(page.locator('h1')).toHaveText('Digital Sovereignty Initiative');
   await page.screenshot({ path: 'test-results/desktop-en.png' });
   await page.evaluate(() => window.scrollTo(0, innerHeight));
   await page.getByRole('link', { name: 'التبديل إلى العربية' }).click();
@@ -108,7 +108,7 @@ test('GSAP failure and JavaScript disabled expose server-rendered content', asyn
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
   const staticPage = await context.newPage();
   await staticPage.goto(`${process.env.TEST_BASE_URL || 'http://127.0.0.1:3000'}/ar/`);
-  await expect(staticPage.locator('h1')).toHaveText('افهم خياراتك الرقمية');
+  await expect(staticPage.locator('h1')).toHaveText('مبادرة السيادة الرقمية');
   await expect(staticPage.locator('[data-station] h2')).toHaveCount(4);
   await expect(staticPage.locator('noscript img')).toHaveCount(4);
   await context.close();

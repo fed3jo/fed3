@@ -12,13 +12,35 @@ import { SmoothScrolling } from '@/components/alternatives/SmoothScrolling';
 import styles from './landing.module.css';
 import videoStyles from './video-stations.module.css';
 
+const navStations = ['alternatives', 'home-cloud', 'communities'] as const;
+
 export function ScrollExperience({ locale, messages }: { locale: Locale; messages: Messages }) {
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeStation, setActiveStation] = useState<(typeof navStations)[number]>();
+
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 60);
-    update(); window.addEventListener('scroll', update, { passive: true });
-    return () => window.removeEventListener('scroll', update);
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const readingLine = window.innerHeight / 3;
+        const current = navStations.find(station => {
+          const bounds = document.getElementById(station)?.getBoundingClientRect();
+          return bounds && bounds.top <= readingLine && bounds.bottom > readingLine;
+        });
+        setActiveStation(current);
+        setScrolled(window.scrollY > 60);
+      });
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
   }, []);
   const navigate = (station: Station) => {
     setMenu(false);
@@ -36,7 +58,6 @@ export function ScrollExperience({ locale, messages }: { locale: Locale; message
     if (window.fed3Lenis && !reduce) window.fed3Lenis.scrollTo(0, { duration: 1.05 });
     else window.scrollTo({ top: 0, behavior: reduce ? 'instant' : 'smooth' });
   };
-  const navStations = ['alternatives', 'home-cloud', 'communities'] as const;
   return <div className={styles.experience} data-mode="video" data-entered="true">
     <SmoothScrolling enabled defer />
     <a href="#main" className={styles.skip}>{messages.skip}</a>
@@ -48,7 +69,7 @@ export function ScrollExperience({ locale, messages }: { locale: Locale; message
       </Link>
       <button className={styles.menuToggle} aria-expanded={menu} aria-controls="main-navigation" onClick={() => setMenu(!menu)} aria-label={messages.menu}><span /><span /></button>
       <nav id="main-navigation" className={`${styles.navigation} ${menu ? styles.menuOpen : ''}`} aria-label={messages.menu}>
-        {navStations.map((s, i) => <a key={s} href={`#${s}`} className={styles.navItem} onClick={e => { e.preventDefault(); navigate(s); }}>
+        {navStations.map((s, i) => <a key={s} href={`#${s}`} className={styles.navItem} aria-current={activeStation === s ? 'location' : undefined} onClick={e => { e.preventDefault(); navigate(s); }}>
           <span className={styles.navBadge} aria-hidden="true">0{i + 1}</span>
           <span className={styles.navLabel}><InlineText text={messages.nav[s]} /></span>
         </a>)}
@@ -71,7 +92,7 @@ export function ScrollExperience({ locale, messages }: { locale: Locale; message
         </section>
       </section>
     </main>
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ${styles.homeFooter}`}>
       <div className={styles.footerInvitation}><span>{locale === 'ar' ? 'ابدأ من هون' : 'MAKE IT YOURS'}</span><h2>{locale === 'ar' ? 'خلّي القرار بإيدك.' : 'Keep the choice yours.'}</h2><Link href={fed3.routes[locale].alternatives}>{messages.stations.alternatives.action}<span aria-hidden="true">↗</span></Link></div>
       <div className={styles.footerMain}><div><Link href={fed3.routes[locale].home} className={styles.footerBrand}><Image src="/fed3-logo.svg" width={53} height={34} alt="" /><bdi dir="ltr">Fed3</bdi></Link><p>{messages.initiative}</p></div><p className={styles.footerStatement}>{messages.footer}</p></div>
       <div className={styles.socialLinks}><span>{locale === 'ar' ? 'منصاتنا' : 'FIND OUR COMMUNITY'}</span>{['Instagram', 'Signal', 'Proton Mail'].map(name => <Link key={name} href={fed3.routes[locale].contact}><span dir="ltr">{name}</span><small>{locale === 'ar' ? 'قريبًا' : 'Coming soon'}</small><span aria-hidden="true">↗</span></Link>)}</div>
