@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('catalog search, filters and all five comparisons keep matching guides and sources', async ({ page }) => {
+test('the streamlined app showcase and all five comparisons keep matching guides and sources', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/ar/alternatives/');
@@ -8,13 +8,8 @@ test('catalog search, filters and all five comparisons keep matching guides and 
   await expect(page.locator('[data-app-showcase] button[aria-pressed]')).toHaveCount(5);
   await expect(page.locator('[data-privacy-card]')).toHaveCount(3);
   await expect(page.locator('[data-comparison-criterion]')).toHaveCount(10);
-  const search = page.getByRole('searchbox');
-  await search.fill('واتساب');
-  await expect(page.locator('[data-showcase-card] h3')).toHaveText(['Signal']);
-  await search.fill('no-such-app');
-  await expect(page.locator('#catalog article')).toHaveCount(0);
-  await page.getByRole('button', { name: 'مسح البحث والفلاتر' }).click();
-  await page.getByRole('button', { name: 'التخزين', exact: true }).click();
+  await expect(page.locator('#catalog').getByRole('searchbox')).toHaveCount(0);
+  await page.getByRole('button', { name: 'عرض Nextcloud', exact: true }).click();
   await expect(page.locator('[data-showcase-card] h3')).toHaveText(['Nextcloud']);
   await page.getByRole('button', { name: 'قارن الآن: Nextcloud / Google Drive' }).click();
   await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Drive', 'Nextcloud']);

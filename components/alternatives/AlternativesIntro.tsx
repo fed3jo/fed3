@@ -3,9 +3,9 @@ import { messages } from '@/lib/fed3/messages';
 import { InitiativeIntro } from '@/components/landing/InitiativeIntro';
 import identity from '@/components/landing/identity.module.css';
 
-export function AlternativesIntro({ locale, explore }: { locale: Locale; explore: () => void }) {
+export function AlternativesIntro({ locale, explore, reduceMotion }: { locale: Locale; explore: () => void; reduceMotion?: boolean }) {
   const ar = locale === 'ar';
-  return <InitiativeIntro locale={locale} messages={messages[locale]} ready explore={explore} variant="alternatives" identity={
+  return <InitiativeIntro locale={locale} messages={messages[locale]} ready explore={explore} variant="alternatives" reduceMotion={reduceMotion} identity={
     <div className={identity.identity} data-alternatives-identity>
       <p className={identity.eyebrow}>{ar ? 'المحطة الأولى / اختَر أداتك' : 'STATION ONE / CHOOSE YOUR TOOLS'}</p>
       <h1 id="identity-heading">{ar

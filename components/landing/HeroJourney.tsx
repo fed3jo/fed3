@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Locale } from '@/lib/fed3/config';
 import { hasConstrainedConnection } from '@/lib/fed3/network';
-import { heroJourneyVideo } from '@/lib/fed3/videos';
+import { heroJourneyVideo, type IntroVideoSource } from '@/lib/fed3/videos';
 import styles from './home-intro.module.css';
 
-export function HeroJourney({ locale, clipId }: { locale: Locale; clipId: string }) {
+export function HeroJourney({ locale, clipId, media = heroJourneyVideo, label, reduceMotion = false }: { locale: Locale; clipId: string; media?: IntroVideoSource; label?: string; reduceMotion?: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [inView, setInView] = useState(false);
@@ -18,8 +18,9 @@ export function HeroJourney({ locale, clipId }: { locale: Locale; clipId: string
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const ar = locale === 'ar';
-  const source = compact ? heroJourneyVideo.mobileSrc : heroJourneyVideo.src;
-  const shouldPlay = inView && pageVisible && !scrolling && !failed && !reduced;
+  const source = compact ? media.mobileSrc : media.src;
+  const description = label ?? (ar ? 'البدائل الرقمية والسحابة المحلية ومشاركة المعرفة' : 'Digital alternatives, local cloud and sharing knowledge');
+  const shouldPlay = inView && pageVisible && !scrolling && !failed && !reduced && !reduceMotion;
 
   useEffect(() => {
     const element = root.current;
@@ -73,9 +74,9 @@ export function HeroJourney({ locale, clipId }: { locale: Locale; clipId: string
 
   return <div className={styles.journeyClip} style={{ '--journey-clip': `url(#${clipId})`, '--journey-mobile-clip': `url(#${clipId}-mobile)` } as CSSProperties}>
     <div ref={root} className={styles.journeyVisual} data-hero-journey data-state={scrolling ? 'scrolling' : playing ? 'playing' : 'paused'}>
-      {failed ? <img className={styles.journeyVideo} src={heroJourneyVideo.poster} width={1280} height={720} alt={ar ? 'مشاهد محطات مبادرة السيادة الرقمية' : 'The digital sovereignty initiative stations'} />
-        : <video ref={video} className={styles.journeyVideo} src={loaded ? source : undefined} poster={heroJourneyVideo.poster} width={1280} height={720} muted loop playsInline preload="none"
-          aria-label={ar ? 'البدائل الرقمية والسحابة المحلية ومشاركة المعرفة' : 'Digital alternatives, local cloud and sharing knowledge'}
+      {failed ? <img className={styles.journeyVideo} src={media.poster} width={1280} height={720} alt={description} />
+        : <video ref={video} className={styles.journeyVideo} src={loaded ? source : undefined} poster={media.poster} width={1280} height={720} muted loop playsInline preload="none"
+          aria-label={description}
           onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => { setFailed(true); setPlaying(false); }} />}
     </div>
   </div>;

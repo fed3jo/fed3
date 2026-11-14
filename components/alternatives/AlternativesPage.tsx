@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { alternatives, categories, criteria, privacyCriteria, reviewDate, type Category, type Copy } from '@/lib/fed3/alternatives';
+import { alternatives, criteria, privacyCriteria, reviewDate, type Copy } from '@/lib/fed3/alternatives';
 import { fed3, type Locale } from '@/lib/fed3/config';
 import styles from './alternatives.module.css';
 import { JourneyNavigation } from '@/components/shared/JourneyNavigation';
@@ -67,15 +67,11 @@ function Icon({ name }: { name: 'arrow' | 'search' | 'shield' | 'link' | 'check'
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
-const aliases: Record<string, string> = { signal: 'سيغنال سيجنال واتساب واتس اب محادثات', brave: 'بريف برايف كروم متصفح', 'proton-mail': 'بروتون جيميل ايميل إيميل', nextcloud: 'نكست كلاود نكستكلاود درايف سحابة ملفات', onlyoffice: 'اونلي أوفيس أونلي اوفيس دوكس مستندات' };
-
 export function AlternativesPage({ locale }: { locale: Locale }) {
   const c = copy[locale];
   const other = locale === 'ar' ? 'en' : 'ar';
   const pick = (value: Copy) => value[locale];
   const [selectedId, setSelectedId] = useState('signal');
-  const [category, setCategory] = useState<Category | 'all'>('all');
-  const [query, setQuery] = useState('');
   const [view, setView] = useState<View>('all');
   const [expanded, setExpanded] = useState(false);
   const [reduced, setReduced] = useState(false);
@@ -135,8 +131,6 @@ export function AlternativesPage({ locale }: { locale: Locale }) {
     try { await navigator.clipboard.writeText(location.href); setShareState(c.copied); }
     catch { setShareState(c.copyFailed); }
   };
-  const normalized = query.toLocaleLowerCase().trim();
-  const filtered = alternatives.filter(item => (category === 'all' || item.category === category) && `${item.name} ${item.current} ${categories[item.category].ar} ${categories[item.category].en} ${aliases[item.id]}`.toLocaleLowerCase().includes(normalized));
   const rows = app.rows.filter(row => view === 'all' || privacyCriteria.includes(row.key));
   const spotlights = app.rows.filter(row => ['encryption', 'collection', 'control'].includes(row.key));
   const localeUrl = `/${other}/alternatives/?app=${app.id}${view === 'privacy' ? '&view=privacy' : ''}`;
@@ -147,18 +141,16 @@ export function AlternativesPage({ locale }: { locale: Locale }) {
     <AlternativesHeader locale={locale} languageHref={localeUrl} inDirectory homeStyle />
 
     <main id="alternatives-main" tabIndex={-1}>
-      <AlternativesIntro locale={locale} explore={() => {
+      <AlternativesIntro locale={locale} reduceMotion={calm} explore={() => {
         const catalog = document.getElementById('catalog');
         if (catalog) { history.pushState(null, '', '#catalog'); scrollTo(catalog); catalog.focus({ preventScroll: true }); }
       }} />
       <div className={redesign.content}>
       <section id="catalog" tabIndex={-1} className={styles.catalog}>
-        <p className={styles.eyebrow}>{c.catalogEyebrow}</p><div className={styles.sectionHeading}><h2>{c.catalogTitle}</h2><p>{c.catalogLead}</p></div>
-        <div className={styles.filters}><label className={styles.search}><Icon name="search" /><span className="sr-only">{c.search}</span><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={c.searchHint} /></label><div className={styles.categories} role="group" aria-label={locale === 'ar' ? 'فئة التطبيق' : 'App category'}><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>{c.all}</button>{(Object.keys(categories) as Category[]).map(key => <button key={key} aria-pressed={category === key} onClick={() => setCategory(key)}>{pick(categories[key])}</button>)}</div></div>
-        <div className={redesign.catalogTools}><p role="status" aria-live="polite">{filtered.length} / 5 {c.results}</p><button className={styles.motion} aria-pressed={calm} disabled={systemReduced} onClick={() => { const next = !reduced; setReduced(next); try { localStorage.setItem('fed3-reduced-motion', String(next)); } catch { /* Optional preference. */ } }}><span className={styles.tinySwitch} />{c.motion}</button></div>
-        <AlternativeShowcase locale={locale} items={filtered} selectedId={selectedId}
+        <div className={redesign.catalogHeading}><p>{c.catalogEyebrow}</p><h2>{c.catalogTitle}</h2></div>
+        <AlternativeShowcase locale={locale} items={alternatives} selectedId={selectedId}
           onSelect={id => { setSelectedId(id); setExpanded(false); updateUrl(id, view); }} onCompare={choose} />
-        {!filtered.length && <div className={styles.empty}><Icon name="search" /><p>{c.noResults}</p><button onClick={() => { setQuery(''); setCategory('all'); }}>{c.reset}</button></div>}
+
       </section>
 
       <section id="comparison" ref={comparison} tabIndex={-1} className={styles.comparison} aria-labelledby="comparison-heading">
@@ -201,6 +193,6 @@ export function AlternativesPage({ locale }: { locale: Locale }) {
       <JourneyNavigation locale={locale} current="alternatives" currentHref="#catalog" />
       </div>
     </main>
-    <footer className={styles.footer}><div><Link href={fed3.routes[locale].home} className={styles.footerBrand}>Fed3<span>.</span></Link><p>{c.footerNote}</p></div><p className={styles.footerStatement}>{c.footer}</p><a href="#alternatives-main">{c.top}<Icon name="arrow" /></a><p className={styles.localNote}>{c.privacyNote}</p></footer>
+    <footer className={styles.footer}><div><Link href={fed3.routes[locale].home} className={styles.footerBrand}>Fed3<span>.</span></Link><p>{c.footerNote}</p></div><p className={styles.footerStatement}>{c.footer}</p><a href="#alternatives-main">{c.top}<Icon name="arrow" /></a><div className={redesign.footerTools}><button className={styles.motion} aria-pressed={calm} disabled={systemReduced} onClick={() => { const next = !reduced; setReduced(next); try { localStorage.setItem('fed3-reduced-motion', String(next)); } catch { /* Optional preference. */ } }}><span className={styles.tinySwitch} />{c.motion}</button></div><p className={styles.localNote}>{locale === 'ar' ? 'نحفظ تفضيل الحركة واللغة محليًا على جهازك.' : 'Motion and language preferences are saved locally on your device.'}</p></footer>
   </div>;
 }
