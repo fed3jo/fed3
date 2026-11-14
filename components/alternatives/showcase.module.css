@@ -4,18 +4,57 @@
 .catalogHeading{margin-bottom:28px}
 .catalogHeading>p{margin:0 0 12px;color:var(--purple);font-size:11px}
 .catalogHeading>h2{margin:0;font-size:clamp(27px,3vw,40px);font-weight:500;line-height:1.5;letter-spacing:-.035em}
-.showcase{max-width:860px;margin-inline:auto;outline-offset:6px}
-.appList{display:flex;justify-content:center;gap:9px;margin-bottom:22px}
-.appList>button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:51px;min-width:0;padding:11px 17px;border:1px solid #06275915;border-radius:50px;background:#fffdf866;color:var(--navy)}
+
+/* Main Showcase & Stage */
+.showcase{max-width:1380px;margin-inline:auto;outline-offset:6px;width:100%}
+.appList{display:flex;justify-content:center;gap:9px;margin-bottom:22px;max-width:860px;margin-inline:auto;flex-wrap:wrap}
+.appList>button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:51px;min-width:0;padding:11px 17px;border:1px solid #06275915;border-radius:50px;background:#fffdf866;color:var(--navy);transition:all .2s ease}
 .appList bdi{font-size:12px;font-weight:500}
-.appList>button[aria-pressed=true]{background:#fffdf8;border-color:#56247466;box-shadow:0 5px 18px #06275908}
-.viewer{min-width:0}
-.controls{display:grid;grid-template-columns:46px 1fr 46px;align-items:center;gap:16px;margin-bottom:18px;direction:ltr}
-.controls>button{display:grid;place-items:center;width:46px;height:46px;border:1px solid #06275924;border-radius:50%;background:#fffdf8;color:var(--navy);font-size:23px;line-height:1}
-.controls>button:hover{background:var(--navy);color:var(--paper)}
+.appList>button[aria-pressed=true]{background:#fffdf8;border-color:#56247466;box-shadow:0 5px 18px #06275908;transform:scale(1.03)}
+.viewer{min-width:0;width:100%}
+.controls{display:grid;grid-template-columns:46px 1fr 46px;align-items:center;gap:16px;margin-bottom:18px;direction:ltr;max-width:860px;margin-inline:auto}
+.controls>button{display:grid;place-items:center;width:46px;height:46px;border:1px solid #06275924;border-radius:50%;background:#fffdf8;color:var(--navy);font-size:23px;line-height:1;transition:background .2s ease,color .2s ease,transform .2s ease}
+.controls>button:hover{background:var(--navy);color:var(--paper);transform:scale(1.06)}
 .controls>span{text-align:center;font-size:12px;color:var(--purple);letter-spacing:.06em}
-.dragSurface{touch-action:pan-y pinch-zoom;user-select:none}
-.appCard{padding:20px;background:#fffdf8;border-radius:30px;animation:appEnter .25s ease-out}
+.dragSurface{touch-action:pan-y pinch-zoom;user-select:none;width:100%}
+
+/* 3D Multi-card Stage */
+.stage{position:relative;display:flex;align-items:stretch;justify-content:center;gap:18px;width:100%;overflow:clip;padding-block:12px 28px;perspective:1600px;perspective-origin:center center;transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.showcase[data-in-view=false] .stage{opacity:0.25;transform:translateY(36px) scale(0.96)}
+.showcase[data-in-view=true] .stage{opacity:1;transform:translateY(0) scale(1)}
+
+/* Center Active Card Wrapper & Card */
+.centerWrapper{flex:0 1 760px;width:100%;max-width:760px;min-width:0;position:relative;z-index:10;display:flex}
+.appCard{width:100%;display:flex;flex-direction:column;padding:24px;background:#fffdf8;border-radius:32px;box-shadow:0 24px 60px -12px rgba(6,39,89,.14),0 0 0 1px rgba(6,39,89,.06);animation:appEnter .32s cubic-bezier(.16,1,.3,1);overflow:hidden}
+
+/* Flanking Side Cards */
+.sideCard{flex:0 0 310px;width:310px;max-width:310px;min-width:0;background:#fffdf8;border-radius:28px;padding:18px;cursor:pointer;user-select:none;opacity:0.84;box-shadow:0 14px 36px -10px rgba(6,39,89,.1),0 0 0 1px rgba(6,39,89,.06);transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .35s ease,box-shadow .35s ease;z-index:4;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(6,39,89,.07)}
+.sideCard:hover{opacity:1;box-shadow:0 24px 52px -10px rgba(86,36,116,.24),0 0 0 2px rgba(86,36,116,.3)}
+.sideCardPrev{transform:scale(0.93) rotateY(-5deg);transform-origin:inline-end center}
+.sideCardNext{transform:scale(0.93) rotateY(5deg);transform-origin:inline-start center}
+.sideCardPrev:hover,.sideCardNext:hover{transform:scale(0.97) rotateY(0)}
+
+/* Side Visual */
+.sideVisual{display:grid;place-items:center;min-height:240px;border-radius:20px;background:radial-gradient(ellipse at 50% 30%,#183f6e,var(--navy) 76%);overflow:hidden;padding:22px 14px;isolation:isolate}
+.sideVisualPair{display:flex;align-items:center;justify-content:center;gap:14px}
+.sideCurrentPlaque,.sideLogoPlaque{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;flex-shrink:0;border:1px solid #ffffff7a;background:linear-gradient(140deg,#fffdf8,#e6e1d6);box-shadow:4px 6px 0 rgba(86,36,116,.35),8px 16px 22px rgba(3,26,60,.35)}
+.sideCurrentPlaque{width:76px;height:96px;border-radius:16px;transform:rotate(6deg)}
+.sideCurrentPlaque small,.sideLogoPlaque small{font-size:8px;font-weight:600;color:#4d5c70;line-height:1.2}
+.sideLogoPlaque{width:112px;height:136px;border-radius:20px;transform:rotate(-6deg)}
+.sideConnector{color:var(--orange);display:grid;place-items:center}
+.sideConnector svg{width:20px;height:20px}
+
+/* Side Copy */
+.sideCopy{padding:20px 8px 8px;display:flex;flex-direction:column;align-items:flex-start;flex:1;min-width:0}
+.sideTitle{margin:8px 0 6px;font-size:clamp(23px,2.2vw,28px);font-weight:600;color:var(--navy);letter-spacing:-.03em;line-height:1.25}
+.sideDescription{color:#4d5c70;font-size:13px;line-height:1.75;margin:0 0 14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.sideChips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.sideChip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:#f4efe6;border:1px solid rgba(6,39,89,.08);font-size:11px;font-weight:500;color:var(--navy)}
+.sidePeekAction{margin-top:auto;display:inline-flex;align-items:center;justify-content:space-between;gap:8px;width:100%;font-size:12px;font-weight:600;color:var(--navy);padding:10px 16px;border-radius:24px;background:rgba(6,39,89,.05);border:1px solid rgba(6,39,89,.08);transition:all .25s ease}
+.sideCard:hover .sidePeekAction{background:var(--navy);color:var(--paper);border-color:var(--navy)}
+.sidePeekAction svg{width:13px;height:13px;transition:transform .2s ease}
+
+/* Main Visual */
 .visual{display:grid;place-items:center;min-height:300px;overflow:hidden;isolation:isolate;border-radius:23px;background:radial-gradient(ellipse at 50% 30%,#183f6e,var(--navy) 76%)}
 .visualPair{display:flex;align-items:center;justify-content:center;gap:26px;min-width:0;padding:34px 20px}
 .logoPlaque,.currentPlaque{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex-shrink:0;border:1px solid #ffffff7a;background:linear-gradient(140deg,#fffdf8,#e6e1d6);box-shadow:6px 8px 0 #56247466,12px 22px 30px #031a3c50;will-change:transform}
@@ -26,68 +65,113 @@
 .connector{color:var(--orange);display:grid;place-items:center}
 .connector>svg{width:27px;height:27px}
 .showcase[data-in-view=false] .logoPlaque,.showcase[data-in-view=false] .currentPlaque{animation-play-state:paused}
-.appCopy{max-width:650px;margin-inline:auto;padding:30px 17px 17px;display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+
+/* Content & Copy */
+.appCopy{max-width:650px;margin-inline:auto;padding:26px 14px 14px;display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1}
 .category{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--purple)}
 .category>i{width:6px;height:6px;border-radius:50%;background:var(--orange)}
-.appCopy>h3{font-size:clamp(34px,4vw,47px);font-weight:500;letter-spacing:-.045em;line-height:1.25;margin:18px 0 13px;overflow-wrap:anywhere}
-.replacement{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#677588;font-size:12px;line-height:1.8;margin:0 0 20px}
+.appCopy>h3{font-size:clamp(34px,4vw,47px);font-weight:500;letter-spacing:-.045em;line-height:1.25;margin:16px 0 12px;overflow-wrap:anywhere}
+.replacement{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#677588;font-size:12px;line-height:1.8;margin:0 0 14px}
 .replacement>bdi{color:var(--navy);font-weight:500}
-.description{color:#4d5c70;font-size:15px;line-height:1.95;margin:0 0 12px;user-select:text}
+.description{color:#4d5c70;font-size:15px;line-height:1.95;margin:0 0 10px;user-select:text}
+
+/* Description Highlights */
+.highlightBadge{display:inline;padding:2px 7px;margin-inline:2px;border-radius:6px;background:linear-gradient(120deg,rgba(86,36,116,.09) 0%,rgba(243,139,60,.16) 100%);color:var(--navy);font-weight:600;box-decoration-break:clone;-webkit-box-decoration-break:clone;border-bottom:2px solid var(--orange);box-shadow:0 1px 3px rgba(6,39,89,.04);transition:all .25s ease}
+.highlightBadge:hover{background:linear-gradient(120deg,rgba(86,36,116,.16) 0%,rgba(243,139,60,.24) 100%);border-bottom-color:var(--purple);color:var(--purple)}
+
+/* Feature Chips */
+.featureChips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;margin-bottom:14px}
+.featureChip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:9999px;background:#f4efe6;border:1px solid rgba(6,39,89,.08);font-size:11.5px;font-weight:500;color:var(--navy);transition:all .2s ease}
+.featureChip:hover{background:#fff;border-color:rgba(86,36,116,.3);box-shadow:0 4px 12px rgba(86,36,116,.08)}
+.featureChipDot{width:5px;height:5px;border-radius:50%;background:var(--orange);flex-shrink:0}
+
 .source{display:flex;align-items:center;gap:7px;color:var(--purple);font-size:11px;text-decoration:underline;text-underline-offset:4px;line-height:1.8}
 .source>svg{width:14px;height:14px}
-.compare{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--navy);color:var(--paper);border-radius:40px;padding:14px 20px;font-size:13px;width:100%;margin-top:26px;min-height:50px;text-align:start}
-.compare:hover{background:var(--purple)}
+.compare{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--navy);color:var(--paper);border-radius:40px;padding:14px 20px;font-size:13px;width:100%;margin-top:22px;min-height:50px;text-align:start;transition:all .2s ease}
+.compare:hover{background:var(--purple);transform:translateY(-1px);box-shadow:0 8px 24px rgba(86,36,116,.2)}
 .links{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:16px}
-.links>a{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--navy);min-height:34px}
+.links>a{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--navy);min-height:34px;transition:color .2s ease}
+.links>a:hover{color:var(--purple)}
 .links svg{width:16px;height:16px}
 .footerTools{margin-inline-start:auto}
 .footerTools>button{margin:0}
+
 @keyframes floatAlternative{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-6px) rotate(-5deg)}}
 @keyframes floatCurrent{0%,100%{transform:translateY(-3px) rotate(8deg)}50%{transform:translateY(4px) rotate(6deg)}}
-@keyframes appEnter{from{opacity:.4;transform:translateX(12px)}to{opacity:1;transform:none}}
+@keyframes appEnter{from{opacity:.35;transform:translateX(20px) scale(0.98)}to{opacity:1;transform:none}}
 .appCard[data-direction="-1"]{animation-name:appEnterBack}
-@keyframes appEnterBack{from{opacity:.4;transform:translateX(-12px)}to{opacity:1;transform:none}}
-@media(max-width:800px){
-.content{padding-inline:6%}
-.catalogHeading{margin-bottom:23px}
-.catalogHeading>h2{font-size:28px}
-.appList{gap:7px;margin-bottom:17px}
-.appList>button{flex:1;min-height:48px;padding:10px 7px;border-radius:16px}
-.appList bdi{display:none}
-.appList img{width:26px;height:26px}
-.controls{grid-template-columns:43px 1fr 43px;margin-bottom:15px}
-.controls>button{width:43px;height:43px;font-size:22px}
-.appCard{padding:15px;border-radius:25px}
-.visual{min-height:232px;border-radius:20px}
-.visualPair{gap:14px;padding:30px 12px}
-.logoPlaque{width:125px;height:153px;border-radius:21px;gap:13px}
-.logoPlaque img{width:84px;height:84px}
-.currentPlaque{width:80px;height:100px;border-radius:17px;gap:10px}
-.currentPlaque img{width:43px;height:43px}
-.connector>svg{width:20px;height:20px}
-.logoPlaque small,.currentPlaque small{font-size:8px}
-.appCopy{padding:24px 7px 9px}
-.appCopy>h3{font-size:36px}
-.description{font-size:14px}
-.compare{font-size:12px;padding-inline:17px}
-.links{gap:20px}
-.footerTools{margin:0;width:100%}
-.footerTools>button{width:auto;margin:0;padding:0;border:0}
+@keyframes appEnterBack{from{opacity:.35;transform:translateX(-20px) scale(0.98)}to{opacity:1;transform:none}}
+
+/* Responsive Breakpoints */
+@media(max-width:1100px){
+  .stage{gap:14px}
+  .sideCard{flex:0 0 240px;width:240px;max-width:240px;padding:14px}
+  .sideVisual{min-height:190px}
+  .sideLogoPlaque{width:90px;height:110px}
+  .sideCurrentPlaque{width:60px;height:78px}
+  .sideTitle{font-size:22px}
+  .sideDescription{font-size:12px;-webkit-line-clamp:2}
+}
+@media(max-width:860px){
+  .content{padding-inline:5%}
+  .catalogHeading{margin-bottom:23px}
+  .catalogHeading>h2{font-size:28px}
+  .appList{gap:7px;margin-bottom:17px}
+  .appList>button{flex:1;min-height:48px;padding:10px 7px;border-radius:16px}
+  .appList bdi{display:none}
+  .appList img{width:26px;height:26px}
+  .controls{grid-template-columns:43px 1fr 43px;margin-bottom:15px}
+  .controls>button{width:43px;height:43px;font-size:22px}
+  .stage{gap:12px;padding-block:8px 16px;align-items:center}
+  .centerWrapper{flex:0 0 calc(100% - 40px);max-width:calc(100% - 40px)}
+  .sideCard{flex:0 0 76px;width:76px;padding:8px 4px;border-radius:18px;opacity:0.45;align-self:center}
+  .sideVisual{min-height:100px;padding:8px 4px;border-radius:12px}
+  .sideCurrentPlaque,.sideConnector,.sideDescription,.sideChips,.sideReplacement,.sidePeekAction{display:none}
+  .sideLogoPlaque{width:54px;height:66px;transform:none;border-radius:12px}
+  .sideLogoPlaque img{width:36px !important;height:36px !important}
+  .sideCopy{padding:8px 2px 2px;align-items:center}
+  .sideTitle{font-size:11px;text-align:center;margin:4px 0 0}
+  .appCard{padding:16px;border-radius:26px}
+  .visual{min-height:232px;border-radius:20px}
+  .visualPair{gap:14px;padding:30px 12px}
+  .logoPlaque{width:125px;height:153px;border-radius:21px;gap:13px}
+  .logoPlaque img{width:84px;height:84px}
+  .currentPlaque{width:80px;height:100px;border-radius:17px;gap:10px}
+  .currentPlaque img{width:43px;height:43px}
+  .connector>svg{width:20px;height:20px}
+  .logoPlaque small,.currentPlaque small{font-size:8px}
+  .appCopy{padding:22px 6px 8px}
+  .appCopy>h3{font-size:36px}
+  .description{font-size:14px}
+  .compare{font-size:12px;padding-inline:17px}
+  .links{gap:20px}
+  .footerTools{margin:0;width:100%}
+  .footerTools>button{width:auto;margin:0;padding:0;border:0}
 }
 @media(max-width:380px){
-.appCard{padding:12px;border-radius:22px}
-.visual{min-height:207px;border-radius:17px}
-.visualPair{gap:10px;padding-inline:8px}
-.logoPlaque{width:108px;height:136px;border-radius:18px}
-.logoPlaque img{width:72px;height:72px}
-.currentPlaque{width:70px;height:88px;border-radius:15px}
-.currentPlaque img{width:36px;height:36px}
-.connector>svg{width:17px;height:17px}
-.logoPlaque small,.currentPlaque small{font-size:8px}
-.appCopy{padding-inline:4px}
-.appCopy>h3{font-size:33px}
-.description{font-size:13px}
-.links{gap:14px}
+  .centerWrapper{flex:0 0 calc(100% - 24px);max-width:calc(100% - 24px)}
+  .sideCard{flex:0 0 52px;width:52px;padding:6px 2px}
+  .sideVisual{min-height:80px}
+  .sideLogoPlaque{width:42px;height:52px}
+  .sideLogoPlaque img{width:28px !important;height:28px !important}
+  .appCard{padding:12px;border-radius:22px}
+  .visual{min-height:207px;border-radius:17px}
+  .visualPair{gap:10px;padding-inline:8px}
+  .logoPlaque{width:108px;height:136px;border-radius:18px}
+  .logoPlaque img{width:72px;height:72px}
+  .currentPlaque{width:70px;height:88px;border-radius:15px}
+  .currentPlaque img{width:36px;height:36px}
+  .connector>svg{width:17px;height:17px}
+  .logoPlaque small,.currentPlaque small{font-size:8px}
+  .appCopy{padding-inline:4px}
+  .appCopy>h3{font-size:33px}
+  .description{font-size:13px}
+  .links{gap:14px}
 }
-@media(prefers-reduced-motion:reduce){.appCard,.logoPlaque,.currentPlaque{animation:none}.logoPlaque,.currentPlaque{will-change:auto}}
-[data-motion=reduced] .appCard,[data-motion=reduced] .logoPlaque,[data-motion=reduced] .currentPlaque{animation:none}
+@media(prefers-reduced-motion:reduce){
+  .appCard,.logoPlaque,.currentPlaque,.stage,.sideCard{animation:none !important;transition:none !important}
+  .logoPlaque,.currentPlaque{will-change:auto}
+}
+[data-motion=reduced] .appCard,[data-motion=reduced] .logoPlaque,[data-motion=reduced] .currentPlaque,[data-motion=reduced] .stage,[data-motion=reduced] .sideCard{
+  animation:none !important;transition:none !important
+}
