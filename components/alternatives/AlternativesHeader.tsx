@@ -14,8 +14,9 @@ import { InlineText } from '@/components/landing/StationContent';
 export type SectionNavItem = { id: string; label: string; soon?: boolean };
 type StationId = 'alternatives' | 'home-cloud' | 'communities';
 const stations: StationId[] = ['alternatives', 'home-cloud', 'communities'];
-export function AlternativesHeader({ locale, languageHref, inDirectory = false, navItems, navigationId = 'alternatives-navigation', currentStation = 'alternatives' }: { locale: Locale; languageHref: string; inDirectory?: boolean; navItems?: SectionNavItem[]; navigationId?: string; currentStation?: StationId }) {
+export function AlternativesHeader({ locale, languageHref, inDirectory = false, navItems, navigationId = 'alternatives-navigation', currentStation = 'alternatives', homeStyle = false }: { locale: Locale; languageHref: string; inDirectory?: boolean; navItems?: SectionNavItem[]; navigationId?: string; currentStation?: StationId; homeStyle?: boolean }) {
   const [menu, setMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState('');
   const other = locale === 'ar' ? 'en' : 'ar';
   const m = messages[locale];
@@ -37,6 +38,7 @@ export function AlternativesHeader({ locale, languageHref, inDirectory = false, 
         let current = '';
         for (const id of sectionIds.split(',')) if ((document.getElementById(id)?.getBoundingClientRect().top ?? Infinity) <= 170) current = id;
         setActive(current);
+        setScrolled(window.scrollY > 60);
       });
     };
     update(); window.addEventListener('scroll', update, { passive: true }); window.addEventListener('resize', update);
@@ -57,7 +59,7 @@ export function AlternativesHeader({ locale, languageHref, inDirectory = false, 
     document.cookie = `fed3-locale=${other}; Path=/; Max-Age=31536000; SameSite=Lax`;
   };
 
-  return <header className={`${landing.header} ${landing.headerVisible} ${styles.floatingHeader}`}>
+  return <header className={`${landing.header} ${landing.headerVisible} ${styles.floatingHeader} ${homeStyle ? landing.homeHeader : ''}`} data-floating={homeStyle ? scrolled : undefined}>
     <Link href={fed3.routes[locale].home} className={landing.brand} aria-label={`Fed3 / ${m.home}`}><Image src="/fed3-logo.svg" alt="" width={52} height={34} priority /><span className={landing.wordmark} dir="ltr">Fed3<span className={landing.brandDot}>.</span></span></Link>
     <button id={toggleId} className={`${landing.menuToggle} ${menuStyles.toggle}`} aria-expanded={menu} aria-controls={navigationId} aria-label={m.menu} onClick={() => setMenu(!menu)}><span /><span /></button>
     <nav id={navigationId} className={`${landing.navigation} ${menuStyles.panel} ${menu ? landing.menuOpen : ''}`} aria-label={m.menu}>
