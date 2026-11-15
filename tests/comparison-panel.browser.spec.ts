@@ -1,22 +1,29 @@
 import { expect, test } from '@playwright/test';
 import { alternatives } from '../lib/fed3/alternatives';
 import { comparisonGroups } from '../lib/fed3/comparison-layout';
+import { comparisonBriefs } from '../lib/fed3/comparison-briefs';
+import { appStart } from '../lib/fed3/app-start';
 
 for (const locale of ['ar', 'en'] as const) {
   test(`visual comparisons retain every fact, qualifier and source for all five apps (${locale})`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(`/${locale}/alternatives/?app=brave#comparison`);
     await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Chrome', 'Brave']);
-    const picker = page.getByRole('combobox', { name: locale === 'ar' ? 'اختر المقارنة' : 'Choose a comparison', exact: true });
     for (const app of alternatives) {
-      await picker.selectOption(app.id);
+      await page.locator('[data-comparison-picker]>button').click();
+      await page.locator(`[data-comparison-option="${app.id}"]`).click();
       await expect(page.locator('#comparison [data-app-name]')).toHaveText([app.current, app.name]);
+      await expect(page.locator(`[data-comparison-topic="${appStart[app.id].firstCriterion}"]`)).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
       await expect(page.locator('#comparison table')).toHaveCount(0);
       for (const row of app.rows) {
         const element = page.locator(`[data-comparison-row="${row.key}"]`);
-        expect(await element.locator('[data-comparison-current] p').textContent()).toBe(row.current[locale]);
-        expect(await element.locator('[data-comparison-alternative] p').textContent()).toBe(row.alternative[locale]);
+        expect(await element.locator('[data-comparison-full=current] p').textContent()).toBe(row.current[locale]);
+        expect(await element.locator('[data-comparison-full=alternative] p').textContent()).toBe(row.alternative[locale]);
+        expect(await element.locator('[data-comparison-current] p').textContent()).toBe(comparisonBriefs[app.id][row.key].current[locale].replaceAll('**', ''));
+        expect(await element.locator('[data-comparison-alternative] p').textContent()).toBe(comparisonBriefs[app.id][row.key].alternative[locale].replaceAll('**', ''));
+        await expect(element.locator('[data-comparison-current] mark')).toHaveCount(1);
+        expect(await element.locator('[data-comparison-alternative] mark').count()).toBeGreaterThan(0);
         expect(await element.locator('details a').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')))).toEqual(row.sources.map(index => app.sources[index].url));
       }
       expect(await page.locator('[data-comparison-row] mark').count()).toBeGreaterThan(0);
@@ -35,7 +42,7 @@ for (const locale of ['ar', 'en'] as const) {
       const source = page.locator('[data-comparison-row=portability] details');
       await source.locator('summary').click();
       await expect(source.locator('a').first()).toBeVisible();
-      await expect(page.locator('#comparison a[data-download]')).toHaveAttribute('href', app.download);
+      await expect(page.locator('#comparison a[data-download]').first()).toHaveAttribute('href', app.download);
     }
   });
 
@@ -63,6 +70,32 @@ for (const locale of ['ar', 'en'] as const) {
       await page.reload();
       await expect(page.locator('[data-comparison-topic=limitations]')).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('[data-comparison-row=limitations]')).toBeVisible();
+    }
+  });
+
+  test(`branded picker supports dismissal and offers clear official download actions (${locale})`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(`/${locale}/alternatives/?app=brave#comparison`);
+    await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Chrome', 'Brave']);
+    await expect(page.locator('#comparison select')).toHaveCount(0);
+    const trigger = page.locator('[data-comparison-picker]>button');
+    await trigger.click();
+    await expect(page.locator('[data-comparison-option]')).toHaveCount(5);
+    await expect(page.locator('[data-comparison-option] img')).toHaveCount(10);
+    await expect(page.locator('[data-comparison-option=brave]')).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('Escape');
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await page.locator('#comparison-heading').click();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    for (const app of alternatives) {
+      await trigger.click();
+      await page.locator(`[data-comparison-option="${app.id}"]`).click();
+      const action = page.locator('#comparison a[data-download]').first();
+      await expect(action).toHaveAttribute('aria-label', appStart[app.id].downloadLabel[locale]);
+      await expect(action).toHaveAttribute('href', app.download);
+      await expect(page.locator('#comparison ol>li')).toHaveCount(3);
     }
   });
 }

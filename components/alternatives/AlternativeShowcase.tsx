@@ -1,76 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { Locale } from '@/lib/fed3/config';
 import { categories, type Alternative } from '@/lib/fed3/alternatives';
 import { appIntroductions } from '@/lib/fed3/app-introductions';
+import { appStart } from '@/lib/fed3/app-start';
+import { PlainText } from './PlainText';
 import { AppLogo } from './AppLogo';
 import { DirectionalArrow, DownloadIcon } from './DirectionalArrow';
 import styles from './showcase.module.css';
-
-const highlightedDescriptions: Record<string, { ar: ReactNode; en: ReactNode }> = {
-  signal: {
-    ar: (
-      <>
-        تطبيق للمراسلة و<mark className={styles.highlightBadge}>المكالمات الصوتية والمرئية</mark>، يدعم المحادثات الجماعية ومشاركة الصور والملفات، مع <mark className={styles.highlightBadge}>تشفير طرفي للرسائل والمكالمات</mark>.
-      </>
-    ),
-    en: (
-      <>
-        A messaging app with <mark className={styles.highlightBadge}>voice and video calls</mark>, group chats, and photo and file sharing. Messages and calls use <mark className={styles.highlightBadge}>end-to-end encryption</mark>.
-      </>
-    ),
-  },
-  brave: {
-    ar: (
-      <>
-        متصفح مبني على Chromium، مع <mark className={styles.highlightBadge}>حماية Shields المدمجة لحظر الإعلانات والمتعقبات</mark>. يمكنك <mark className={styles.highlightBadge}>تعديل الحماية حسب الموقع</mark> الذي تزوره.
-      </>
-    ),
-    en: (
-      <>
-        A Chromium-based browser with <mark className={styles.highlightBadge}>built-in Shields to block ads and trackers</mark>. Protection can be <mark className={styles.highlightBadge}>adjusted for individual websites</mark>.
-      </>
-    ),
-  },
-  'proton-mail': {
-    ar: (
-      <>
-        خدمة بريد إلكتروني تستخدم <mark className={styles.highlightBadge}>تشفيرًا يمنع الخدمة من قراءة محتوى الرسائل</mark> المخزنة. تدعم <mark className={styles.highlightBadge}>استيراد البريد</mark>، وتختلف خصائصها وحدودها بحسب الخطة.
-      </>
-    ),
-    en: (
-      <>
-        An email service with <mark className={styles.highlightBadge}>zero-access encryption for stored message content</mark> and tools to <mark className={styles.highlightBadge}>import existing mail</mark>. Features and limits depend on the plan.
-      </>
-    ),
-  },
-  nextcloud: {
-    ar: (
-      <>
-        برنامج <mark className={styles.highlightBadge}>لمزامنة الملفات ومشاركتها والتعاون عليها</mark> عبر الويب والهاتف والحاسوب. يمكن <mark className={styles.highlightBadge}>تشغيله على خادم تختاره</mark>، مع إدارة الوصول إلى الملفات.
-      </>
-    ),
-    en: (
-      <>
-        Software to <mark className={styles.highlightBadge}>sync, share and collaborate on files</mark> across web, mobile and desktop. It can <mark className={styles.highlightBadge}>run on a server you choose</mark>, with file access controls.
-      </>
-    ),
-  },
-  onlyoffice: {
-    ar: (
-      <>
-        مجموعة محررات للمستندات والجداول والعروض وملفات PDF. <mark className={styles.highlightBadge}>تعمل على جهازك دون إنترنت</mark>، ويمكن <mark className={styles.highlightBadge}>ربطها بخدمات سحابية للتعاون</mark> مع الآخرين.
-      </>
-    ),
-    en: (
-      <>
-        Editors for documents, spreadsheets, presentations and PDFs. <mark className={styles.highlightBadge}>Work offline on your computer</mark> or <mark className={styles.highlightBadge}>connect to a cloud service for collaboration</mark>.
-      </>
-    ),
-  },
-};
 
 export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCompare }: {
   locale: Locale; items: Alternative[]; selectedId: string; onSelect: (id: string) => void; onCompare: (id: string) => void;
@@ -240,7 +179,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                 <p className={styles.replacement}>
                   {ar ? 'بديل لـ' : 'An alternative to'} <AppLogo name={prevApp.current} size={18} /><bdi>{prevApp.current}</bdi>
                 </p>
-                <p className={styles.sideDescription}>{prevIntro.description[locale]}</p>
+                <p className={styles.sideDescription}><PlainText text={appStart[prevApp.id].intro[locale]} /></p>
                 <div className={styles.sideChips}>
                   {prevIntro.features.slice(0, 2).map((feature, fi) => (
                     <span key={fi} className={styles.sideChip}>
@@ -287,7 +226,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                   </p>
 
                   <p className={styles.description}>
-                    {highlightedDescriptions[app.id]?.[locale] ?? intro.description[locale]}
+                    <PlainText text={appStart[app.id].intro[locale]} />
                   </p>
 
                   <div className={styles.featureChips} aria-label={ar ? 'أبرز المزايا' : 'Key features'}>
@@ -314,7 +253,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                     <DirectionalArrow />
                   </button>
 
-                  <div className={styles.links}>
+                  <p className={styles.downloadNote}>{appStart[app.id].note[locale]}</p><div className={styles.links}>
                     <a
                       href={app.download}
                       target="_blank"
@@ -323,7 +262,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                       aria-label={`${ar ? 'تنزيل التطبيق' : 'Download app'}: ${app.name}`}
                     >
                       <DownloadIcon />
-                      {ar ? 'تنزيل التطبيق' : 'Download app'}
+                      {appStart[app.id].downloadLabel[locale]}
                     </a>
                     <Link
                       href={`/${locale}/apps/${app.id}/`}
@@ -371,7 +310,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                 <p className={styles.replacement}>
                   {ar ? 'بديل لـ' : 'An alternative to'} <AppLogo name={nextApp.current} size={18} /><bdi>{nextApp.current}</bdi>
                 </p>
-                <p className={styles.sideDescription}>{nextIntro.description[locale]}</p>
+                <p className={styles.sideDescription}><PlainText text={appStart[nextApp.id].intro[locale]} /></p>
                 <div className={styles.sideChips}>
                   {nextIntro.features.slice(0, 2).map((feature, fi) => (
                     <span key={fi} className={styles.sideChip}>

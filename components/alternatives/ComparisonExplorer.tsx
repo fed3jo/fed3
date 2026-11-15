@@ -5,12 +5,15 @@ import type { Alternative, ComparisonRow, Criterion } from '@/lib/fed3/alternati
 import { criteria, privacyCriteria } from '@/lib/fed3/alternatives';
 import { criterionQuestions } from '@/lib/fed3/narrative';
 import type { Locale } from '@/lib/fed3/config';
+import { comparisonBriefs } from '@/lib/fed3/comparison-briefs';
+import { appStart } from '@/lib/fed3/app-start';
+import { PlainText } from './PlainText';
 import { AppLogo } from './AppLogo';
 import { StoryIcon } from '@/components/shared/SovereigntyStory';
 import styles from './alternatives.module.css';
 
 export function ComparisonExplorer({ app, rows, locale }: { app: Alternative; rows: ComparisonRow[]; locale: Locale }) {
-  const [selected, setSelected] = useState<Criterion>('encryption');
+  const [selected, setSelected] = useState<Criterion>(appStart[app.id].firstCriterion);
   const row = rows.find(item => item.key === selected) || rows[0];
   const index = rows.indexOf(row);
   const ar = locale === 'ar';
@@ -28,9 +31,10 @@ export function ComparisonExplorer({ app, rows, locale }: { app: Alternative; ro
       <div className={styles.axisContent}>
         <h4>{criterionQuestions[row.key][locale]}</h4>
         <div className={styles.axisSides}>
-          <article><div className={styles.axisIdentity}><AppLogo name={app.current} size={36} /><div><small>{ar ? 'التطبيق الحالي' : 'CURRENT APP'}</small><h5 dir="ltr">{app.current}</h5></div></div><p>{row.current[locale]}</p></article>
-          <article><div className={styles.axisIdentity}><AppLogo name={app.name} size={36} /><div><small>{ar ? 'البديل المقترح' : 'ALTERNATIVE'}</small><h5 dir="ltr">{app.name}</h5></div></div><p>{row.alternative[locale]}</p></article>
+          <article><div className={styles.axisIdentity}><AppLogo name={app.current} size={36} /><div><small>{ar ? 'التطبيق الحالي' : 'CURRENT APP'}</small><h5 dir="ltr">{app.current}</h5></div></div><p><PlainText text={comparisonBriefs[app.id]?.[row.key]?.current[locale] ?? row.current[locale]} /></p></article>
+          <article><div className={styles.axisIdentity}><AppLogo name={app.name} size={36} /><div><small>{ar ? 'البديل المقترح' : 'ALTERNATIVE'}</small><h5 dir="ltr">{app.name}</h5></div></div><p><PlainText text={comparisonBriefs[app.id]?.[row.key]?.alternative[locale] ?? row.alternative[locale]} /></p></article>
         </div>
+        <details className={styles.plainFull}><summary>{ar ? 'التفاصيل الكاملة' : 'Full details'}</summary><p><bdi>{app.current}</bdi>: {row.current[locale]}</p><p><bdi>{app.name}</bdi>: {row.alternative[locale]}</p></details>
         <div className={styles.axisEvidence}><span>{ar ? 'اقرأ من المصدر' : 'READ THE SOURCES'}</span>{row.sources.map(number => <a href={app.sources[number].url} target="_blank" rel="noopener noreferrer" key={number}>{app.sources[number].name[locale]} ↗</a>)}</div>
       </div>
       <div className={styles.axisControls}><span>{ar ? 'قارن ما يناسبك، ثم جرّب خطوة.' : 'Compare what matters, then try one step.'}</span><div><button onClick={() => next(-1)} aria-label={ar ? 'المحور السابق' : 'Previous criterion'}>‹</button><button onClick={() => next(1)} aria-label={ar ? 'المحور التالي' : 'Next criterion'}>›</button></div></div>

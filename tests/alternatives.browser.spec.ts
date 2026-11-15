@@ -22,7 +22,8 @@ test('the streamlined app showcase and all five comparisons keep matching guides
     ['nextcloud', 'Google Drive', 'Nextcloud', 'https://nextcloud.com/install/'],
     ['onlyoffice', 'Google Docs', 'ONLYOFFICE', 'https://www.onlyoffice.com/download-desktop'],
   ]) {
-    await page.getByRole('combobox', { name: 'اختر المقارنة', exact: true }).selectOption(id);
+    await page.locator('[data-comparison-picker]>button').click();
+    await page.locator(`[data-comparison-option="${id}"]`).click();
     await expect(page.locator('#comparison [data-app-name]')).toHaveText([current, alternative]);
     await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
     await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
@@ -76,7 +77,8 @@ test('mobile layouts, both writing directions and reduced motion remain usable',
       await page.goto(`/${locale}/alternatives/`);
       await expect(page.locator('[data-motion]')).toHaveAttribute('data-motion', 'reduced');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await page.getByRole('combobox', { name: locale === 'ar' ? 'اختر المقارنة' : 'Choose a comparison', exact: true }).selectOption('nextcloud');
+      await page.locator('[data-comparison-picker]>button').click();
+      await page.locator('[data-comparison-option=nextcloud]').click();
       await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Drive', 'Nextcloud']);
       expect(await page.locator('[data-comparison-row]:visible').evaluateAll(cards => cards.every(card => card.getBoundingClientRect().right <= innerWidth))).toBe(true);
       if (width === 390) await page.screenshot({ path: `test-results/alternatives-${locale}-mobile.png`, fullPage: true });
