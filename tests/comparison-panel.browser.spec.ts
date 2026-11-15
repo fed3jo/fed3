@@ -95,7 +95,8 @@ for (const locale of ['ar', 'en'] as const) {
       const action = page.locator('#comparison a[data-download]').first();
       await expect(action).toHaveAttribute('aria-label', appStart[app.id].downloadLabel[locale]);
       await expect(action).toHaveAttribute('href', app.download);
-      await expect(page.locator('#comparison ol>li')).toHaveCount(3);
+      await expect(page.locator('#comparison ol>li')).toHaveCount(0);
+      await expect(page.locator('#comparison a[data-download]')).toHaveCount(1);
     }
   });
 }

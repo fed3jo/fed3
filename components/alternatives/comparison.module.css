@@ -27,6 +27,11 @@
 .topicNav{display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 2px 0;overflow-x:auto;scrollbar-width:thin}
 .topicNav>button{flex-shrink:0;min-height:40px;padding:9px 16px;color:#677588;border-radius:40px;border:1px solid transparent;font-size:12px;white-space:nowrap}
 .topicNav>button[aria-pressed=true]{background:#fffdf8;color:var(--purple);border-color:#56247428;box-shadow:0 3px 12px #06275905}
+.autoAdvance{display:flex;align-items:center;justify-content:center;gap:12px;min-height:32px;margin-top:5px}
+.autoAdvance>button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:5px 7px;color:var(--purple);font-size:10px;border-radius:8px}
+.autoAdvance>button:hover{background:#56247409}
+.readingTrack{width:66px;height:2px;overflow:hidden;border-radius:4px;background:#56247418}
+.readingTrack>span{display:block;height:100%;background:var(--orange);border-radius:inherit}
 .criterion{animation:topicReveal .22s ease-out}
 .groupPanel[hidden],.criterion[hidden]{display:none}
 .question{display:flex;flex-direction:column;align-items:center;text-align:center;padding:15px 12px 17px;gap:9px}
@@ -48,9 +53,6 @@
 .fullFacts{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px 8px 5px}
 .fullFacts>div>bdi{font-size:11px;color:var(--purple)}
 .fullFacts p{font-size:13px;line-height:1.9;color:#4d5c70;margin:9px 0 0}
-.startSteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;grid-column:1/-1;list-style:none;margin:5px 0 0;padding:0}
-.startSteps>li{display:flex;gap:10px;align-items:flex-start;padding:16px;background:#fffdf8;border-radius:14px;font-size:12px;color:#4d5c70;line-height:1.9}
-.startSteps>li>span{display:grid;place-items:center;width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#56247409;color:var(--purple);font-size:10px}
 .boardFooter{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 5px 0}
 .boardFooter>span{font-size:11px;color:#677588}
 .share{display:inline-flex;align-items:center;gap:8px;min-height:35px;color:var(--purple);font-size:11px}
@@ -61,13 +63,6 @@
 .takeaways>div:last-child{border-color:#f16e0080}
 .takeaways h3{font-size:14px;font-weight:500;margin:0 0 10px;color:var(--purple)}
 .takeaways p{font-size:13px;line-height:1.9;color:#4d5c70;margin:0}
-.tryApp{display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px 30px;padding-top:28px;margin-top:28px;border-top:1px solid #06275918}
-.tryApp h3{font-size:24px;font-weight:500;margin:0 0 10px;line-height:1.5}
-.tryApp p{font-size:13px;line-height:1.9;color:#4d5c70;margin:0;max-width:650px}
-.download{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:13px 25px;border-radius:50px;background:var(--orange);color:var(--navy);font-size:13px;white-space:nowrap}
-.download:hover{background:var(--navy);color:var(--paper)}
-.appDetails{display:flex;align-items:center;gap:8px;grid-column:1/-1;min-height:32px;width:fit-content;font-size:11px;color:var(--purple)}
-.appDetails>svg{width:16px;height:16px}
 .about{border-top:1px solid #06275913;margin-top:24px}
 .about>summary{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:18px 0;font-size:11px;color:#677588;list-style:none;cursor:pointer}
 .about p{font-size:12px;color:#677588;line-height:1.9;max-width:780px;margin:0 0 10px}
@@ -105,15 +100,10 @@
 .rowSources>summary{font-size:10px;min-height:38px}
 .rowSources a{font-size:10px}
 .fullFacts{grid-template-columns:1fr;gap:16px;padding-inline:2px}
-.startSteps{grid-template-columns:1fr;gap:9px}
 .boardFooter{gap:12px;align-items:flex-start}
 .boardFooter>span,.share{font-size:10px;line-height:1.8}
 .takeaways{grid-template-columns:1fr;gap:12px;margin-top:24px}
 .takeaways>div{padding:19px}
-.tryApp{grid-template-columns:1fr;gap:18px;margin-top:24px;padding-top:24px}
-.tryApp h3{font-size:22px}
-.download{justify-self:start;font-size:12px;padding-inline:24px}
-.appDetails{grid-column:1}
 }
 @media(max-width:380px){.heading h2{font-size:30px}.arena{padding:10px;border-radius:20px}.pairApp{padding-inline:5px;min-height:143px}.pairApp h3{font-size:16px}.pairApp small{font-size:8px}.logo{width:52px;height:52px;border-radius:16px}.logo img{width:35px;height:35px}.pairBar,.facts{gap:10px}.facts>div{padding:15px 10px}.facts p{font-size:13px}.question>h4{font-size:21px}.groupTabs>button{font-size:11px}.boardFooter>span{max-width:120px}}
 @media(prefers-reduced-motion:reduce){.criterion{animation:none}}

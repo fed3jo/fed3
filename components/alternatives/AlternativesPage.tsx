@@ -119,7 +119,7 @@ export function AlternativesPage({ locale }: { locale: Locale }) {
             onSelect={id => { setSelectedId(id); setOpenGroup('privacy'); setActiveCriterion(appStart[id].firstCriterion); updateUrl(id, 'privacy'); }} onCompare={choose} />
         </section>
         <section id="comparison" ref={comparison} tabIndex={-1} className={comparisonStyles.section} aria-labelledby="comparison-heading">
-          <ComparisonPanel key={app.id} locale={locale} app={app} openGroup={openGroup} activeCriterion={activeCriterion} onGroupChange={id => {
+          <ComparisonPanel key={app.id} reduceMotion={calm} locale={locale} app={app} openGroup={openGroup} activeCriterion={activeCriterion} onGroupChange={id => {
             if (id === openGroup) return;
             setOpenGroup(id);
             const keys = comparisonGroups.find(group => group.id === id)!.criteria;

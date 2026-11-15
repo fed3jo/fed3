@@ -28,7 +28,7 @@ test('the streamlined app showcase and all five comparisons keep matching guides
     await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
     await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
     await expect(page.locator('#comparison a[data-download]').first()).toHaveAttribute('href', id === 'proton-mail' ? 'https://proton.me/mail/download' : official);
-    await expect(page.locator('#comparison').getByRole('link', { name: `صفحة التطبيق: ${alternative}`, exact: true })).toHaveAttribute('href', `/ar/apps/${id}/`);
+    await expect(page.locator('#catalog').getByRole('link', { name: `صفحة التطبيق: ${alternative}`, exact: true })).toHaveAttribute('href', `/ar/apps/${id}/`);
     expect(await page.locator('[data-comparison-row]').evaluateAll(rows => rows.every(row => row.querySelectorAll('a[href^="https://"]').length > 0))).toBe(true);
   }
   await expect(page.locator('#game')).toContainText('بكرا الافتتاح');
@@ -183,7 +183,7 @@ test('all five app pages offer official downloads and return to the matching com
   }
   await page.getByRole('link', { name: 'Open full comparison', exact: true }).click();
   await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Docs', 'ONLYOFFICE']);
-  await page.locator('#comparison').getByRole('link', { name: 'App details: ONLYOFFICE', exact: true }).click();
+  await page.locator('#catalog').getByRole('link', { name: 'App details: ONLYOFFICE', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('ONLYOFFICE');
   await page.getByRole('link', { name: 'التبديل إلى العربية', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
