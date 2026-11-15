@@ -7,6 +7,7 @@ import type { Messages } from '@/lib/fed3/messages';
 import { InitiativeIntro } from './InitiativeIntro';
 import { InlineText, StationContent } from './StationContent';
 import { StationVideo } from './StationVideo';
+import { PrivacyFiles } from './PrivacyFiles';
 import { stationVideos } from '@/lib/fed3/videos';
 import { SmoothScrolling } from '@/components/alternatives/SmoothScrolling';
 import styles from './landing.module.css';
@@ -87,9 +88,7 @@ export function ScrollExperience({ locale, messages }: { locale: Locale; message
           <StationVideo source={stationVideos[station]} locale={locale} title={messages.nav[station]} />
           <StationContent station={station} locale={locale} messages={messages} />
         </section>)}
-        <section id="closing" className={videoStyles.closing} aria-labelledby="closing-heading">
-          <StationContent station="closing" locale={locale} messages={messages} />
-        </section>
+        <PrivacyFiles locale={locale} />
       </section>
     </main>
     <footer className={`${styles.footer} ${styles.homeFooter}`}>
