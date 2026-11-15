@@ -36,3 +36,5 @@
 @media(max-width:700px){.teaser{grid-template-columns:1fr;padding:11px;gap:0;border-radius:19px;margin-bottom:45px}.copy{grid-column:1;grid-row:2;padding:25px 18px 23px}.art{grid-column:1;grid-row:1;aspect-ratio:1.5;width:100%;border-radius:11px}.city{width:100%;height:auto;margin:0;transform:translateY(-11%)}.copy h2{font-size:56px;margin-bottom:3px}.eyebrow{margin-bottom:9px}.statement{font-size:20px;margin-bottom:9px}.lead{font-size:13px;margin-bottom:18px}.tags{margin-bottom:20px}.start{width:100%;min-height:54px}.artLabel{bottom:16px;inset-inline:20px;font-size:10px}.coordinates{display:inline}.note{font-size:10px}.loading{font-size:14px;padding:24px}.loading small{font-size:10px}}
 @media(max-width:380px){.copy{padding-inline:12px}.coordinates{display:none}.art{aspect-ratio:1.4}.copy h2{font-size:48px}.statement{font-size:18px}.lead{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.loading span,.drone{animation:none}.start{transition:none}.start:hover{transform:none}}
+
+.note a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; text-decoration: underline; text-underline-offset: 4px; }

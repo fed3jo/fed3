@@ -307,3 +307,5 @@
 @media (prefers-reduced-motion: reduce) {
   .page a, .page button { transition: none; }
 }
+
+.participationGrid[data-participation-status] { margin-top: 24px; }

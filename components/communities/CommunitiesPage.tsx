@@ -8,6 +8,7 @@ import { JourneyNavigation } from '@/components/shared/JourneyNavigation';
 import { communitiesCopy } from '@/lib/fed3/communities';
 import { fed3, type Locale } from '@/lib/fed3/config';
 import { stationVideos } from '@/lib/fed3/videos';
+import { SiteLinks } from '@/components/shared/SiteLinks';
 import styles from './communities.module.css';
 
 const sections = ['community-tracks', 'community-journey', 'community-participation', 'community-faq'];
@@ -86,7 +87,7 @@ export function CommunitiesPage({ locale }: { locale: Locale }) {
       <section id="community-participation" className={styles.participation} aria-labelledby="community-participation-heading">
         <p className={styles.sectionLabel}><bdi>03</bdi>{c.nav[2]}</p>
         <h2 id="community-participation-heading">{c.participationTitle}</h2>
-        <aside className={styles.registration}><span><i aria-hidden="true" />{c.registration}</span><p>{c.registrationDetail}</p></aside>
+        <aside className={styles.registration}><span><i aria-hidden="true" />{c.registration}</span><p>{c.registrationDetail}</p><Link className={styles.trackLink} href={routes.contact}>{c.contactAction}<DirectionalArrow /></Link></aside>
         <div className={styles.participationGrid}>
           <article id="community-individuals" className={styles.participationCard}>
             <span><FeatureIcon name="people" size={26} />{c.individualLabel}</span>
@@ -100,6 +101,10 @@ export function CommunitiesPage({ locale }: { locale: Locale }) {
             <p>{c.organizationDetail}</p>
             <Link className={styles.secondary} href={`${routes['home-cloud']}#cloud-readiness`}>{c.organizationAction}<DirectionalArrow /></Link>
           </article>
+        </div>
+        <div className={styles.participationGrid} data-participation-status>
+          <article className={styles.participationCard}><h3>{c.ambassadorsTitle}</h3><p>{c.ambassadorsDetail}</p></article>
+          <article className={styles.participationCard}><h3>{c.recognitionTitle}</h3><p>{c.recognitionDetail}</p></article>
         </div>
       </section>
 
@@ -117,5 +122,6 @@ export function CommunitiesPage({ locale }: { locale: Locale }) {
       </section>
       <JourneyNavigation locale={locale} current="communities" currentHref="#communities-main" />
     </main>
+    <SiteLinks locale={locale} />
   </div>;
 }

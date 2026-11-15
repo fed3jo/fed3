@@ -1,10 +1,8 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { fed3, isLocale } from '@/lib/fed3/config';
+import { isLocale } from '@/lib/fed3/config';
 import { messages } from '@/lib/fed3/messages';
-import { InlineText } from '@/components/landing/StationContent';
-import styles from '@/components/landing/landing.module.css';
+import { InfoPage } from '@/components/info/InfoPage';
+import { infoCopy, type InfoSection } from '@/lib/fed3/public-info';
 import { AlternativesPage } from '@/components/alternatives/AlternativesPage';
 import { HomeCloudPage } from '@/components/cloud/HomeCloudPage';
 import { CommunitiesPage } from '@/components/communities/CommunitiesPage';
@@ -27,7 +25,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     icons: { icon: '/fed3-logo.svg' },
     alternates: { languages: { ar: '/ar/communities/', en: '/en/communities/' } },
   };
-  return { title: `${title} | Fed3`, robots: { index: false, follow: true } };
+  const info = infoCopy[locale][section as InfoSection];
+  return { title: `${info.title} | Fed3`, description: info.description, robots: { index: true, follow: true }, icons: { icon: '/fed3-logo.svg' }, alternates: { languages: { ar: `/ar/${section}/`, en: `/en/${section}/` } } };
 }
 export default async function Destination({ params }: { params: Promise<{ locale: string; section: string }> }) {
   const { locale, section } = await params;
@@ -35,7 +34,5 @@ export default async function Destination({ params }: { params: Promise<{ locale
   if (section === 'alternatives') return <AlternativesPage locale={locale} />;
   if (section === 'home-cloud') return <HomeCloudPage locale={locale} />;
   if (section === 'communities') return <CommunitiesPage locale={locale} />;
-  const m = messages[locale];
-  const title = section in m.nav ? m.nav[section as keyof typeof m.nav] : m[section as 'privacy' | 'contact'];
-  return <main className={styles.destination}><Link href={fed3.routes[locale].home} className={styles.brand}><Image src="/fed3-logo.svg" width={56} height={36} alt="" /><bdi dir="ltr">Fed3</bdi></Link><p className={styles.eyebrow}>{m.initiative}</p><h1><InlineText text={title} /></h1><p>{m.pending}</p><Link className={styles.primary} href={fed3.routes[locale].home}>{m.home} <span aria-hidden="true">↗</span></Link></main>;
+  return <InfoPage locale={locale} section={section as InfoSection} />;
 }

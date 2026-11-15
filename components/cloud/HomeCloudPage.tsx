@@ -9,6 +9,7 @@ import { DirectionalArrow } from '@/components/alternatives/DirectionalArrow';
 import { FeatureIcon } from '@/components/shared/FeatureIcon';
 import { ReadinessSurvey } from './ReadinessSurvey';
 import { JourneyNavigation } from '@/components/shared/JourneyNavigation';
+import { SiteLinks } from '@/components/shared/SiteLinks';
 import { CloudGuideHero, CloudRequirements, CloudDailyGuide, CloudServices, CloudHelp, CloudGuideSources } from './CloudGuideSections';
 import shared from '@/components/alternatives/alternatives.module.css';
 import styles from './cloud.module.css';
@@ -60,5 +61,6 @@ export function HomeCloudPage({ locale }: { locale: Locale }) {
       <JourneyNavigation locale={locale} current="home-cloud" currentHref="#cloud-overview" />
     </main>
     <footer className={styles.footer}><Link href={fed3.routes[locale].home} className={styles.footerBrand} dir="ltr">Fed3<span>.</span></Link><p>{c.footer}</p><nav><Link href={fed3.routes[locale].home}>{c.returnHome}<DirectionalArrow /></Link><Link href={fed3.routes[locale].alternatives}>{c.alternatives}<DirectionalArrow /></Link></nav></footer>
+    <SiteLinks locale={locale} />
   </div>;
 }

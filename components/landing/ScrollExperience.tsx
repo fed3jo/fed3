@@ -10,6 +10,7 @@ import { StationVideo } from './StationVideo';
 import { PrivacyFiles } from './PrivacyFiles';
 import { stationVideos } from '@/lib/fed3/videos';
 import { SmoothScrolling } from '@/components/alternatives/SmoothScrolling';
+import { initiativeEmail, initiativeMailto } from '@/lib/fed3/public-info';
 import styles from './landing.module.css';
 import videoStyles from './video-stations.module.css';
 
@@ -94,7 +95,7 @@ export function ScrollExperience({ locale, messages }: { locale: Locale; message
     <footer className={`${styles.footer} ${styles.homeFooter}`}>
       <div className={styles.footerInvitation}><span>{locale === 'ar' ? 'ابدأ من هون' : 'MAKE IT YOURS'}</span><h2>{locale === 'ar' ? 'خلّي القرار بإيدك.' : 'Keep the choice yours.'}</h2><Link href={fed3.routes[locale].alternatives}>{messages.stations.alternatives.action}<span aria-hidden="true">↗</span></Link></div>
       <div className={styles.footerMain}><div><Link href={fed3.routes[locale].home} className={styles.footerBrand}><Image src="/fed3-logo.svg" width={53} height={34} alt="" /><bdi dir="ltr">Fed3</bdi></Link><p>{messages.initiative}</p></div><p className={styles.footerStatement}>{messages.footer}</p></div>
-      <div className={styles.socialLinks}><span>{locale === 'ar' ? 'منصاتنا' : 'FIND OUR COMMUNITY'}</span>{['Instagram', 'Signal', 'Proton Mail'].map(name => <Link key={name} href={fed3.routes[locale].contact}><span dir="ltr">{name}</span><small>{locale === 'ar' ? 'قريبًا' : 'Coming soon'}</small><span aria-hidden="true">↗</span></Link>)}</div>
+      <div className={styles.socialLinks}><span>{locale === 'ar' ? 'تواصل مع الفريق' : 'CONTACT THE TEAM'}</span><a href={initiativeMailto}><bdi dir="ltr">{initiativeEmail}</bdi><span aria-hidden="true">↗</span></a><Link href={fed3.routes[locale].contact}>{locale === 'ar' ? 'الاستفسارات وحالة التسجيل' : 'Enquiries and registration status'}</Link></div>
       <div className={styles.footerBottom}><small><bdi>© {new Date().getFullYear()} Fed3.</bdi> {locale === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}</small><nav aria-label={messages.menu}><Link href={fed3.routes[locale].about}>{messages.nav.about}</Link><Link href={fed3.routes[locale].privacy}>{messages.privacy}</Link><Link href={fed3.routes[locale].contact}>{messages.contact}</Link></nav><button onClick={backTop}>{messages.top}<span aria-hidden="true">↑</span></button></div>
     </footer>
 

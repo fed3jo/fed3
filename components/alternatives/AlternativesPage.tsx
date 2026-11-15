@@ -12,6 +12,7 @@ import { SmoothScrolling } from './SmoothScrolling';
 import { AlternativesHeader } from './AlternativesHeader';
 import { ComparisonPanel } from './ComparisonPanel';
 import { GameLauncher } from '@/components/game/GameLauncher';
+import { SiteLinks } from '@/components/shared/SiteLinks';
 import { AlternativesIntro } from './AlternativesIntro';
 import { AlternativeShowcase } from './AlternativeShowcase';
 import redesign from './showcase.module.css';
@@ -141,5 +142,6 @@ export function AlternativesPage({ locale }: { locale: Locale }) {
       }}><span className={styles.tinySwitch} />{c.motion}</button></div>
       <p className={styles.localNote}>{locale === 'ar' ? 'نحفظ تفضيل الحركة واللغة محليًا على جهازك.' : 'Motion and language preferences are saved locally on your device.'}</p>
     </footer>
+    <SiteLinks locale={locale} />
   </div>;
 }

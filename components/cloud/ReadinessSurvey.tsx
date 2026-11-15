@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 import type { Locale } from '@/lib/fed3/config';
 import { cloudCopy, cloudSurvey } from '@/lib/fed3/cloud';
@@ -36,7 +37,7 @@ export function ReadinessSurvey({ locale }: { locale: Locale }) {
         </>}
       </fieldset>)}
       <div className={styles.surveyActions}><button type="button" className={styles.back} disabled={step === 0} onClick={() => move(step - 1)}>{c.back}</button>{step < 2 ? <button type="button" className={styles.next} onClick={() => move(step + 1)}>{c.next}<span aria-hidden="true">↗</span></button> : <button type="submit" className={styles.next} disabled>{c.submit}</button>}</div>
-      <p className={styles.noSend}>{c.previewNote}</p>
+      <p className={styles.noSend}>{c.previewNote} <Link href={`/${locale}/privacy/`}>{locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy policy'}</Link> · <Link href={`/${locale}/contact/`}>{locale === 'ar' ? 'تواصل مع الفريق' : 'Contact the team'}</Link></p>
     </form>
   </div>;
 }

@@ -16,7 +16,7 @@ export const cloudCopy = {
     nav: ['الفكرة', 'كيف تشتغل؟', 'خطوات التجهيز', 'الجاهزية'],
     eyebrow: 'المحطة 02 / السحابة المحلية', title: 'سحابة داخل مؤسستك.', accent: 'وملفاتكم بإيدكم.',
     lead: 'مساحة خاصة لحفظ الملفات ومشاركتها على جهاز مستقل داخل المؤسسة. نبدأ بفهم احتياجكم، ثم تجهيز الجهاز والصلاحيات والنسخ الاحتياطي، وتدريب الكادر على الاستخدام والإدارة.',
-    explore: 'شوف كيف بتشتغل', survey: 'استبيان الجاهزية', soon: 'قريبًا',
+    explore: 'شوف كيف بتشتغل', survey: 'استبيان الجاهزية', soon: 'معاينة فقط',
     ownership: 'كل مؤسسة تشغّل جهازها المستقل.', signature: 'تحكّم بالمكان. افهم المسؤولية.',
     strip: ['جهاز داخل المؤسسة', 'حساب لكل مستخدم', 'نسخة احتياطية منفصلة'],
     overview: 'مكان واحد لملفات الشغل.', overviewLead: 'السحابة المحلية بتنظّم وصول الفريق للملفات. باستخدام Nextcloud، بتقدروا ترفعوا وتزامنوا وتشاركوا، مع تحديد مين بقدر يوصل لكل مساحة.',
@@ -56,9 +56,9 @@ export const cloudCopy = {
       ['مين بقدر يقرأ الملفات؟', 'هذا يعتمد على الحسابات والصلاحيات ونوع التشفير. مدير الخادم عنده صلاحيات تشغيل واسعة؛ وضّحوا حدود الوصول قبل الاستخدام. التخزين المحلي وحده مش ضمان للخصوصية.'],
       ['هل التجهيز بدون تكلفة؟', 'البرمجية مفتوحة المصدر، لكن الجهاز والتخزين والطاقة والنسخ ووقت الصيانة والدعم إلها تكلفة. تحديدها بيبدأ بفهم الاحتياج.'],
     ],
-    readinessTitle: 'هل مؤسستكم جاهزة للخطوة؟', readinessLead: 'معاينة لأسئلة تقييم الجاهزية التقنية والإدارية، من نموذج الأسبوع 12 في المبادرة. الإرسال قريبًا؛ بإمكانكم الاطلاع وتجربة تعبئة الأسئلة الآن.',
+    readinessTitle: 'هل مؤسستكم جاهزة للخطوة؟', readinessLead: 'معاينة لأسئلة تقييم الجاهزية التقنية والإدارية. تقدروا تتنقّلوا بين الأقسام وتجرّبوا الإجابة، لكن المعاينة ما بتستقبل طلبات. للاستفسار عن المبادرة استخدموا صفحة التواصل.',
     previewNote: 'معاينة فقط. إجاباتك لا تُرسل ولا تُحفظ، وتختفي عند مغادرة الصفحة أو تحديثها.',
-    surveyGroups: ['عن المؤسسة', 'الجاهزية التقنية', 'الدعم والمتابعة'], next: 'القسم التالي', back: 'السابق', submit: 'الإرسال قريبًا', preview: 'معاينة الاستبيان', optional: 'اختياري',
+    surveyGroups: ['عن المؤسسة', 'الجاهزية التقنية', 'الدعم والمتابعة'], next: 'القسم التالي', back: 'السابق', submit: 'الإرسال غير متاح بالمعاينة', preview: 'معاينة الاستبيان', optional: 'اختياري',
     multi: 'يمكن اختيار أكثر من إجابة', progress: 'القسم', of: 'من',
     footer: 'السحابة المحلية / Fed3', returnHome: 'العودة إلى الرئيسية', alternatives: 'استكشف البدائل', sourceLabel: 'مراجع التجهيز',
   },
@@ -66,7 +66,7 @@ export const cloudCopy = {
     nav: ['The idea', 'How it works', 'Setup steps', 'Readiness'],
     eyebrow: 'CHAPTER 02 / LOCAL CLOUD', title: 'A cloud inside your organization.', accent: 'Your files, in your hands.',
     lead: 'A private space for storing and sharing files on independent hardware inside your organization. Start with your needs, then prepare the device, access controls and backups, and train the team to use and manage it.',
-    explore: 'See how it works', survey: 'Readiness survey', soon: 'Soon', ownership: 'Each organization runs its own independent device.', signature: 'Control the location. Understand the responsibility.',
+    explore: 'See how it works', survey: 'Readiness survey', soon: 'Preview only', ownership: 'Each organization runs its own independent device.', signature: 'Control the location. Understand the responsibility.',
     strip: ['Hardware on your premises', 'A separate account for each user', 'An independent backup'],
     overview: 'One place for your team’s files.', overviewLead: 'Local cloud storage organizes your team’s access to files. Nextcloud lets you upload, sync and share while defining who can access each space.',
     uses: [['folder', 'Organized files', 'Folders for daily work and archived photos and documents, accessible from a phone or computer.'], ['people', 'Sharing with permissions', 'Separate accounts, groups and storage quotas, with sharing links whose access you control.'], ['backup', 'Recovery you practise', 'Sync and backup serve different purposes. Set up a separate backup and test recovery before moving important files.']],
@@ -93,9 +93,9 @@ export const cloudCopy = {
       ['Who can read the files?', 'It depends on accounts, permissions and encryption. Administrators have broad operational access. Define its limits before use; local storage alone does not guarantee privacy.'],
       ['Is setup free?', 'The software is open source. Hardware, storage, power, backup, maintenance and support still have costs. Assess your needs first.'],
     ],
-    readinessTitle: 'Is your organization ready?', readinessLead: 'Preview the technical and administrative readiness questions from the initiative’s week 12 form. Submission is coming soon; you can explore the questions now.',
+    readinessTitle: 'Is your organization ready?', readinessLead: 'Preview the technical and administrative readiness questions. You can explore all sections and try answers, but this preview does not accept applications. Use the contact page to ask about the initiative.',
     previewNote: 'Preview only. Answers are never sent or saved and disappear when you leave or refresh the page.',
-    surveyGroups: ['Your organization', 'Technical readiness', 'Support & maintenance'], next: 'Next section', back: 'Previous', submit: 'Submission coming soon', preview: 'Survey preview', optional: 'Optional', multi: 'Choose all that apply', progress: 'Section', of: 'of',
+    surveyGroups: ['Your organization', 'Technical readiness', 'Support & maintenance'], next: 'Next section', back: 'Previous', submit: 'Submission unavailable in preview', preview: 'Survey preview', optional: 'Optional', multi: 'Choose all that apply', progress: 'Section', of: 'of',
     footer: 'Local Cloud / Fed3', returnHome: 'Back to home', alternatives: 'Explore alternatives', sourceLabel: 'Setup references',
   },
 };
@@ -123,4 +123,4 @@ export const cloudSurvey: SurveyField[][] = [
   ],
 ];
 
-export const cloudNav = (locale: Locale) => ['cloud-overview', 'cloud-flow', 'cloud-steps', 'cloud-readiness'].map((id, i) => ({ id, label: cloudCopy[locale].nav[i], soon: i === 3 }));
+export const cloudNav = (locale: Locale) => ['cloud-overview', 'cloud-flow', 'cloud-steps', 'cloud-readiness'].map((id, i) => ({ id, label: cloudCopy[locale].nav[i] }));

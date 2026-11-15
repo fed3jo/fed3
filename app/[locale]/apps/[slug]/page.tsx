@@ -1,3 +1,4 @@
+import { SiteLinks } from '@/components/shared/SiteLinks';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { alternatives, categories, reviewDate } from '@/lib/fed3/alternatives';
@@ -58,5 +59,6 @@ export default async function AppDetails({ params }: { params: Promise<{ locale:
       <section id="app-sources" className={styles.appSources}><h2>{c.sources}</h2><p>{c.reviewed}: <time dateTime="2026-10-24">{reviewDate[locale]}</time></p><ol>{app.sources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.name[locale]} ↗</a></li>)}</ol></section>
     </main>
     <footer className={`${styles.footer} ${styles.appFooter}`}><Link href={`${fed3.routes[locale].alternatives}#catalog`}>{c.back}<DirectionalArrow /></Link><Link href={fed3.routes[locale].home}>{c.home}<DirectionalArrow /></Link></footer>
+    <SiteLinks locale={locale} />
   </div>;
 }

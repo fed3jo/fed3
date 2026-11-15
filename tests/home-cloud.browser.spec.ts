@@ -61,7 +61,7 @@ test('all 13 survey questions can be previewed, preserve local answers and never
   await page.screenshot({ path: 'test-results/cloud-survey-desktop.png' });
   await survey.getByRole('button', { name: 'القسم التالي' }).click();
   await expect(survey.locator('[data-survey-question]')).toHaveCount(4);
-  await expect(survey.getByRole('button', { name: 'الإرسال قريبًا', exact: true })).toBeDisabled();
+  await expect(survey.getByRole('button', { name: 'الإرسال غير متاح بالمعاينة', exact: true })).toBeDisabled();
   await expect(survey.locator('form')).not.toHaveAttribute('action', /.+/);
   await survey.getByRole('button', { name: 'عن المؤسسة', exact: true }).click();
   await expect(survey.getByRole('textbox', { name: 'ما هو اسم المنشأة؟', exact: true })).toHaveValue('معاينة الاختبار');
