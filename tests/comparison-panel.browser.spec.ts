@@ -3,7 +3,7 @@ import { alternatives } from '../lib/fed3/alternatives';
 import { comparisonGroups } from '../lib/fed3/comparison-layout';
 
 for (const locale of ['ar', 'en'] as const) {
-  test(`grouped comparisons retain every fact, qualifier and source for all five apps (${locale})`, async ({ page }) => {
+  test(`visual comparisons retain every fact, qualifier and source for all five apps (${locale})`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(`/${locale}/alternatives/?app=brave#comparison`);
     await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Chrome', 'Brave']);
@@ -21,13 +21,17 @@ for (const locale of ['ar', 'en'] as const) {
       }
       expect(await page.locator('[data-comparison-row] mark').count()).toBeGreaterThan(0);
       for (const group of comparisonGroups) {
-        const trigger = page.locator(`[data-comparison-group="${group.id}"] h3>button`);
-        if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click();
-        await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-        await expect(page.locator('[data-comparison-group] h3>button[aria-expanded=true]')).toHaveCount(1);
-        await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(group.criteria.length);
-        await expect(trigger).toBeInViewport({ ratio: 1 });
+        const tab = page.locator(`[data-comparison-group="${group.id}"]`);
+        await tab.click();
+        await expect(tab).toHaveAttribute('aria-selected', 'true');
+        await expect(page.getByRole('tab', { selected: true })).toHaveCount(1);
+        for (const criterion of group.criteria) {
+          await page.locator(`[data-comparison-topic="${criterion}"]`).click();
+          await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(1);
+          await expect(page.locator(`[data-comparison-row="${criterion}"]`)).toBeVisible();
+        }
       }
+      await page.locator('[data-comparison-topic=portability]').click();
       const source = page.locator('[data-comparison-row=portability] details');
       await source.locator('summary').click();
       await expect(source.locator('a').first()).toBeVisible();
@@ -35,7 +39,7 @@ for (const locale of ['ar', 'en'] as const) {
     }
   });
 
-  test(`responsive comparison cells, keyboard toggles and collapsed links stay usable (${locale})`, async ({ page }) => {
+  test(`paired visuals, tab keyboard navigation and deep links stay usable (${locale})`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const width of [320, 390, 768, 1440, 1905]) {
       await page.setViewportSize({ width, height: 900 });
@@ -45,19 +49,20 @@ for (const locale of ['ar', 'en'] as const) {
       const row = page.locator('[data-comparison-row=cost]');
       const current = (await row.locator('[data-comparison-current]').boundingBox())!;
       const alternative = (await row.locator('[data-comparison-alternative]').boundingBox())!;
-      if (width <= 800) expect(current.y + current.height).toBeLessThan(alternative.y);
-      else expect(locale === 'ar' ? current.x > alternative.x : current.x < alternative.x).toBe(true);
+      expect(locale === 'ar' ? current.x > alternative.x : current.x < alternative.x).toBe(true);
+      expect(Math.abs(current.y - alternative.y)).toBeLessThan(1);
       expect(current.x).toBeGreaterThanOrEqual(0);
       expect(alternative.x + alternative.width).toBeLessThanOrEqual(width);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      const toggle = page.locator('[data-comparison-group=cost] h3>button');
-      await toggle.focus();
-      await page.keyboard.press('Enter');
-      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(0);
-      await expect(page).toHaveURL(/group=none/);
+      const cost = page.locator('[data-comparison-group=cost]');
+      await cost.focus();
+      await page.keyboard.press('End');
+      await expect(page.locator('[data-comparison-group=migration]')).toHaveAttribute('aria-selected', 'true');
+      await page.locator('[data-comparison-topic=limitations]').click();
+      await expect(page).toHaveURL(/criterion=limitations/);
       await page.reload();
-      await expect(page.locator('[data-comparison-group] h3>button[aria-expanded=true]')).toHaveCount(0);
+      await expect(page.locator('[data-comparison-topic=limitations]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('[data-comparison-row=limitations]')).toBeVisible();
     }
   });
 }

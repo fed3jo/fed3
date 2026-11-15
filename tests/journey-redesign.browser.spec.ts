@@ -48,10 +48,10 @@ test('visual criteria, sources, app details and mobile navigation stay consisten
   for (const locale of ['ar', 'en']) {
     await page.setViewportSize({ width: 1440, height: 960 });
     await page.goto(`/${locale}/alternatives/?app=nextcloud#comparison`);
-    const migration = page.locator('[data-comparison-group=migration] h3>button');
+    const migration = page.locator('[data-comparison-group=migration]');
     await migration.click();
-    await expect(migration).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(2);
+    await expect(migration).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(1);
     await page.locator('[data-comparison-row=portability] details summary').click();
     await expect(page.locator('[data-comparison-row=portability] details[open] a').first()).toBeVisible();
     await page.locator('[data-compact-comparison]').scrollIntoViewIfNeeded();
