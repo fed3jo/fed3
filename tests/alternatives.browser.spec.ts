@@ -6,8 +6,8 @@ test('the streamlined app showcase and all five comparisons keep matching guides
   await page.goto('/ar/alternatives/');
   await expect(page.locator('[data-showcase-card]')).toHaveCount(1);
   await expect(page.locator('[data-app-showcase] button[aria-pressed]')).toHaveCount(5);
-  await expect(page.locator('[data-privacy-card]')).toHaveCount(3);
-  await expect(page.locator('[data-comparison-criterion]')).toHaveCount(10);
+  await expect(page.locator('[data-comparison-group]')).toHaveCount(4);
+  await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
   await expect(page.locator('#catalog').getByRole('searchbox')).toHaveCount(0);
   await page.getByRole('button', { name: 'عرض Nextcloud', exact: true }).click();
   await expect(page.locator('[data-showcase-card] h3')).toHaveText(['Nextcloud']);
@@ -22,50 +22,48 @@ test('the streamlined app showcase and all five comparisons keep matching guides
     ['nextcloud', 'Google Drive', 'Nextcloud', 'https://nextcloud.com/install/'],
     ['onlyoffice', 'Google Docs', 'ONLYOFFICE', 'https://www.onlyoffice.com/download-desktop'],
   ]) {
-    await page.getByRole('button', { name: `${current} / ${alternative}`, exact: true }).click();
+    await page.getByRole('combobox', { name: 'اختر المقارنة', exact: true }).selectOption(id);
     await expect(page.locator('#comparison [data-app-name]')).toHaveText([current, alternative]);
-    await expect(page.locator('tbody tr')).toHaveCount(10);
-    await expect(page.locator('[data-comparison-criterion]')).toHaveCount(10);
-    await expect(page.getByRole('link', { name: /افتح الموقع الرسمي/ })).toHaveAttribute('href', official);
+    await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
+    await expect(page.locator('[data-comparison-row]')).toHaveCount(10);
     await expect(page.locator('#comparison a[data-download]').first()).toHaveAttribute('href', id === 'proton-mail' ? 'https://proton.me/mail/download' : official);
     await expect(page.locator('#comparison').getByRole('link', { name: `صفحة التطبيق: ${alternative}`, exact: true })).toHaveAttribute('href', `/ar/apps/${id}/`);
-    expect(await page.locator('tbody tr').evaluateAll(rows => rows.every(row => row.querySelectorAll('a[href^="https://"]').length > 0))).toBe(true);
+    expect(await page.locator('[data-comparison-row]').evaluateAll(rows => rows.every(row => row.querySelectorAll('a[href^="https://"]').length > 0))).toBe(true);
   }
   await expect(page.locator('#game')).toContainText('بكرا الافتتاح');
   await expect(page.locator('#game [data-game-launch]')).toBeVisible();
   await expect(page.locator('[data-game-dialog]')).toHaveCount(0);
-  await page.getByRole('button', { name: 'اعرض المقارنة كجدول', exact: true }).click();
-  await expect(page.getByRole('table')).toBeVisible();
-  await page.getByRole('button', { name: 'أخفِ الجدول', exact: true }).click();
-  await expect(page.getByRole('table')).toBeHidden();
-  const detail = page.locator('[data-comparison-criterion]').nth(1);
-  await detail.click();
-  await expect(detail).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-comparison-explorer] h4')).toHaveText('شو بتعرف الخدمة عنك؟');
+  const featureGroup = page.locator('[data-comparison-group="features"]');
+  await featureGroup.locator('h3>button').click();
+  await expect(featureGroup.locator('h3>button')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('[data-comparison-group="privacy"] h3>button')).toHaveAttribute('aria-expanded', 'false');
+  await expect(featureGroup.locator('[data-comparison-row]:visible')).toHaveCount(2);
+  await featureGroup.locator('details summary').first().click();
+  await expect(featureGroup.locator('details[open] a').first()).toBeVisible();
   expect(await page.locator('img[src^="/app-logos/"]').evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
   expect(errors).toEqual([]);
 });
 
 test('shared comparison and locale survive navigation and reload', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/ar/alternatives/?app=proton-mail&view=privacy');
+  await page.goto('/ar/alternatives/?app=proton-mail&group=migration#comparison');
   await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Gmail', 'Proton Mail']);
-  await expect(page.locator('tbody tr')).toHaveCount(5);
+  await expect(page.locator('[data-comparison-group=migration] h3>button')).toHaveAttribute('aria-expanded', 'true');
   await page.getByRole('link', { name: 'Switch to English' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Gmail', 'Proton Mail']);
-  await expect(page.locator('tbody tr')).toHaveCount(5);
+  await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(2);
   await page.getByRole('button', { name: 'Copy comparison link', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Link copied' })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('app=proton-mail&view=privacy');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('app=proton-mail&group=migration');
   await page.reload();
-  await expect(page.locator('tbody tr')).toHaveCount(5);
-  await page.screenshot({ path: 'test-results/alternatives-en.png', fullPage: false });
-  await page.getByRole('button', { name: 'All criteria', exact: true }).click();
-  await expect(page.locator('tbody tr')).toHaveCount(10);
-  await expect(page).not.toHaveURL(/view=privacy/);
-  await page.goto('/en/alternatives/?app=unknown&view=unknown');
+  await expect(page.locator('[data-comparison-group=migration] h3>button')).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('[data-comparison-group=cost] h3>button').click();
+  await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(1);
+  await expect(page).toHaveURL(/group=cost/);
+  await page.goto('/en/alternatives/?app=unknown&group=unknown');
   await expect(page.locator('#comparison [data-app-name]')).toHaveText(['WhatsApp', 'Signal']);
+  await expect(page.locator('[data-comparison-group=privacy] h3>button')).toHaveAttribute('aria-expanded', 'true');
 });
 
 test('mobile layouts, both writing directions and reduced motion remain usable', async ({ page }) => {
@@ -76,9 +74,9 @@ test('mobile layouts, both writing directions and reduced motion remain usable',
       await page.goto(`/${locale}/alternatives/`);
       await expect(page.locator('[data-motion]')).toHaveAttribute('data-motion', 'reduced');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await page.getByRole('button', { name: 'Google Drive / Nextcloud', exact: true }).click();
+      await page.getByRole('combobox', { name: locale === 'ar' ? 'اختر المقارنة' : 'Choose a comparison', exact: true }).selectOption('nextcloud');
       await expect(page.locator('#comparison [data-app-name]')).toHaveText(['Google Drive', 'Nextcloud']);
-      expect(await page.locator('[data-privacy-card]').evaluateAll(cards => cards.every(card => card.getBoundingClientRect().right <= innerWidth))).toBe(true);
+      expect(await page.locator('[data-comparison-row]:visible').evaluateAll(cards => cards.every(card => card.getBoundingClientRect().right <= innerWidth))).toBe(true);
       if (width === 390) await page.screenshot({ path: `test-results/alternatives-${locale}-mobile.png`, fullPage: true });
     }
   }
@@ -144,7 +142,7 @@ test('local sections, directional arrows and journey links work in Arabic and En
     expect(await arrows.evaluateAll(nodes => nodes.every(node => getComputedStyle(node).transform === (document.documentElement.dir === 'rtl' ? 'matrix(-1, 0, 0, 1, 0, 0)' : 'none')))).toBe(true);
     const positions = await page.locator('#comparison [data-app-name]').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().x));
     expect(locale === 'ar' ? positions[0] > positions[1] : positions[0] < positions[1]).toBe(true);
-    const pairs = await page.locator('button[aria-label="Google Drive / Nextcloud"] img').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().x));
+    const pairs = await page.locator('[data-comparison-pair] img').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().x));
     expect(locale === 'ar' ? pairs[0] > pairs[1] : pairs[0] < pairs[1]).toBe(true);
     const home = page.getByRole('link', { name: locale === 'ar' ? 'العودة إلى الرئيسية' : 'Back to home', exact: true });
     await expect(home).toHaveAttribute('href', `/${locale}/`);

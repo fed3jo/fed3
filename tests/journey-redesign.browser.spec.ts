@@ -48,15 +48,17 @@ test('visual criteria, sources, app details and mobile navigation stay consisten
   for (const locale of ['ar', 'en']) {
     await page.setViewportSize({ width: 1440, height: 960 });
     await page.goto(`/${locale}/alternatives/?app=nextcloud#comparison`);
-    const axes = page.locator('[data-comparison-criterion]');
-    await axes.nth(8).click();
-    await expect(axes.nth(8)).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-comparison-explorer] h5')).toHaveText(['Google Drive', 'Nextcloud']);
-    await expect(page.locator('[data-comparison-explorer] a[href^="https://"]').first()).toBeVisible();
-    await page.locator('[data-comparison-explorer]').scrollIntoViewIfNeeded();
+    const migration = page.locator('[data-comparison-group=migration] h3>button');
+    await migration.click();
+    await expect(migration).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('[data-comparison-row]:visible')).toHaveCount(2);
+    await page.locator('[data-comparison-row=portability] details summary').click();
+    await expect(page.locator('[data-comparison-row=portability] details[open] a').first()).toBeVisible();
+    await page.locator('[data-compact-comparison]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `test-results/redesign-axis-${locale}.png` });
     await page.goto(`/${locale}/apps/signal/`);
     await page.screenshot({ path: `test-results/redesign-app-${locale}.png`, fullPage: true });
+    const axes = page.locator('[data-comparison-criterion]');
     for (const width of [320, 390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       await page.locator('a[href="#app-comparison"]').click();
