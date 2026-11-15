@@ -1,256 +1,284 @@
-import { test, expect, type Page } from '@playwright/test';
-import { writeFileSync } from 'node:fs';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { SAVE_KEY, type SavedRun } from '../lib/fed3/exposed';
 
-const dialog = (page: Page) => page.locator('[data-game-dialog]');
+const game = (page: Page) => page.locator('[data-exposed-game]');
+const baseURL = process.env.TEST_BASE_URL || 'http://localhost:3000';
+const checkpoint: SavedRun = { version: 1, stage: 2, choices: { navigation: true, contacts: false, cloud: false }, seconds: 37, pulses: 2 };
+
+test.setTimeout(90_000);
+
 async function launch(page: Page, locale = 'ar') {
-  await page.goto(`/${locale}/alternatives/#game`);
+  await page.goto(`${baseURL}/${locale}/alternatives/#game`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-game-launch]')).toBeVisible({ timeout: 30_000 });
   await page.locator('[data-game-launch]').click();
-  await expect(dialog(page)).toBeVisible();
+  await expect(game(page)).toBeVisible();
+  await expect(game(page)).toHaveAttribute('data-mode', 'intro', { timeout: 30_000 });
+  await expect(page.locator('[data-start]')).toBeEnabled({ timeout: 40_000 });
 }
-async function openTask(page: Page) {
-  await page.locator('[data-world] [data-active=true]').click();
-  await expect(page.locator('[data-game-controls]')).toBeVisible();
+async function start(page: Page) {
+  await page.locator('[data-start]').click();
+  await expect(page.locator('[data-briefing]')).toBeVisible({ timeout: 10_000 });
+  await page.locator('[data-briefing-start]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
 }
-async function assign(page: Page, file: string, role: string) {
-  await page.locator(`[data-file="${file}"]`).click();
-  await page.locator(`[data-role="${role}"]`).click();
+async function position(page: Page) {
+  return { x: Number(await game(page).getAttribute('data-x')), z: Number(await game(page).getAttribute('data-z')) };
 }
-async function advance(page: Page, stage: string) {
-  await page.locator('[data-game-next]').click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', stage);
-  if (stage !== 'ending') { await expect(page.locator('[data-game-controls]')).toHaveCount(0); await openTask(page); }
+async function seed(page: Page, run: SavedRun) {
+  await page.addInitScript(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), { key: SAVE_KEY, value: run });
 }
-async function safeToCloud(page: Page) {
-  await advance(page, 'consent');
-  await page.getByRole('button', { name: 'راجع الشروط وحدد اختياراتك', exact: true }).click();
-  await page.locator('[data-choice=reviewed]').click();
-  await advance(page, 'photos');
-  await page.locator('[data-photo-scope]').click();
-  await page.locator('[data-photo="0"]').click();
-  await page.locator('[data-choice=selected]').click();
-  await advance(page, 'network');
-  await page.locator('[data-choice=prepared]').click();
-  await page.getByRole('button', { name: 'افحص عنوان الصفحة', exact: true }).click();
-  await page.locator('[data-choice=verified]').click();
-  await advance(page, 'cloud');
+async function close(page: Page) {
+  await page.locator('[data-game-close]').click();
+  await expect(game(page)).toHaveCount(0);
+  await expect(page.locator('[data-game-launch]')).toBeFocused();
+  expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
+  await expect(page.locator('[data-world] canvas')).toHaveCount(0);
 }
-async function finishSafe(page: Page) {
-  for (const [index, value] of ['market', 'exhibit', 'reviewers'].entries()) await assign(page, ['orders', 'portraits', 'stories'][index], value);
-  await page.locator('[data-game-restore]').click();
-  await advance(page, 'community');
-  await page.locator('[data-choice=signal]').click();
-  for (let i = 0; i < 3; i++) await page.locator(`[data-practice-step="${i}"]`).click();
-  await advance(page, 'ending');
+function pageErrors(page: Page) {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  return errors;
+}
+async function assertCanvasFits(page: Page) {
+  const canvas = page.locator('[data-world] canvas');
+  await expect(canvas).toBeVisible();
+  await expect.poll(async () => {
+    const box = await canvas.boundingBox();
+    const viewport = page.viewportSize()!;
+    return !!box && Math.abs(box.width - viewport.width) < 2 && Math.abs(box.height - viewport.height) < 2;
+  }).toBe(true);
+  expect(await game(page).evaluate(node => node.scrollWidth <= innerWidth)).toBe(true);
 }
 
-test('game code loads on demand; full prepared route has a causal ready ending', async ({ page }) => {
-  const errors: string[] = []; const scripts: Promise<string>[] = []; const gameUrls = new Set<string>();
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
-    if (/\.(?:js|css)(?:\?|$)/.test(response.url())) scripts.push(response.text().then(source => {
-      if (source.includes('fed3-opening-night-v1') || source.includes('data-calm')) gameUrls.add(response.url());
-      return source;
-    }).catch(() => ''));
-  });
-  await page.goto('/ar/alternatives/#game');
+test('3D game loads on demand, moves with keyboard, pulses and pauses', async ({ page }) => {
+  const errors = pageErrors(page);
+  await page.goto(`${baseURL}/ar/alternatives/#game`);
   await expect(page.locator('[data-game-launch]')).toBeVisible();
-  const before = await Promise.all(scripts);
-  expect(before.some(source => source.includes('fed3-opening-night-v1'))).toBe(false);
-  expect(await dialog(page).count()).toBe(0);
-  const initialBytes = await page.evaluate(() => performance.getEntriesByType('resource').reduce((sum, entry) => sum + (entry as PerformanceResourceTiming).encodedBodySize, 0));
-  const mark = await page.evaluate(() => performance.now());
+  await expect(game(page)).toHaveCount(0);
+  await expect(page.locator('[data-world] canvas')).toHaveCount(0);
   await page.locator('[data-game-launch]').click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', 'intro');
-  expect((await Promise.all(scripts)).some(source => source.includes('fed3-opening-night-v1'))).toBe(true);
-  await expect(page.locator('[data-world] [data-character]')).toHaveCount(6);
-  const reveal = page.getByRole('button', { name: 'اعرض الكلام كاملاً', exact: true });
-  if (await reveal.isVisible()) await reveal.click();
-  await page.screenshot({ animations: 'disabled', path: 'test-results/game-desktop-intro.png' });
-  await safeToCloud(page);
-  if (await reveal.isVisible()) await reveal.click();
-  await page.screenshot({ animations: 'disabled', path: 'test-results/game-desktop-cloud.png' });
-  await finishSafe(page);
-  await expect(page.locator('[data-outcome=ready]')).toBeVisible();
-  await expect(page.locator('[data-ready=true]')).toHaveCount(3);
-  if (await reveal.isVisible()) await reveal.click();
-  await expect(dialog(page).getByText('جهّزت نسخة واختبرت استرجاعها، راعيت نطاق المشاركة، ونقلت المهارة لشخص آخر.')).toBeVisible();
-  await page.screenshot({ animations: 'disabled', path: 'test-results/game-desktop-ending.png' });
-  await Promise.all(scripts);
-  const resources = await page.evaluate(start => performance.getEntriesByType('resource').filter(entry => entry.startTime >= start).map(entry => ({ url: entry.name, name: entry.name.split('/').pop(), bytes: (entry as PerformanceResourceTiming).encodedBodySize })), mark);
-  const additionalBytes = resources.reduce((sum, resource) => sum + resource.bytes, 0);
-  const gameCodeAndStylesBytes = resources.filter(resource => gameUrls.has(resource.url)).reduce((sum, resource) => sum + resource.bytes, 0);
-  expect(gameCodeAndStylesBytes).toBeGreaterThan(0);
-  expect(gameCodeAndStylesBytes).toBeLessThan(100_000);
-  expect(additionalBytes).toBeLessThan(350_000);
-  writeFileSync('test-results/game-bundle.json', JSON.stringify({ initialResourceBytes: initialBytes, totalResourcesAfterOpenBytes: additionalBytes, gameCodeAndStylesBytes, resources, note: 'Encoded bodies observed in local production Chrome. Total after-open requests can include existing website link prefetch. Game code/styles exclude the cover and fonts. Device-dependent observation.' }, null, 2));
+  await expect(page.locator('[data-start]')).toBeEnabled({ timeout: 40_000 });
+  await expect(game(page)).toHaveAccessibleName('لعبة مكشوف');
+  await assertCanvasFits(page);
+  await page.screenshot({ path: 'test-results/exposed-desktop-intro.png' });
+  await start(page);
+  const initial = await position(page);
+  await page.keyboard.down('KeyW');
+  await expect.poll(async () => (await position(page)).z, { timeout: 12_000 }).toBeLessThan(initial.z - 1);
+  await page.keyboard.up('KeyW');
+  await page.locator('[data-pulse]').click();
+  await expect(page.locator('[data-pulse]')).toBeDisabled();
+  await expect(page.locator('[data-pulse]')).toContainText('s');
+  await page.locator('[data-pause]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+  const stopped = await position(page);
+  await page.keyboard.down('KeyW');
+  await page.keyboard.press('KeyF');
+  await expect(game(page)).toHaveAttribute('data-x', stopped.x.toFixed(2));
+  await expect(game(page)).toHaveAttribute('data-z', stopped.z.toFixed(2));
+  await page.keyboard.up('KeyW');
+  await page.getByRole('combobox', { name: 'جودة الرسومات' }).selectOption('low');
+  await expect(page.getByRole('combobox', { name: 'جودة الرسومات' })).toHaveValue('low');
+  await page.locator('[data-resume]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  await page.screenshot({ path: 'test-results/exposed-desktop-playing.png' });
+  await close(page);
   expect(errors).toEqual([]);
 });
 
-test('unprepared route retains consequences and rewind clears only later decisions', async ({ page }) => {
+test('checkpoint restore keeps choices and location sharing can be stopped', async ({ page }) => {
+  const errors = pageErrors(page);
+  await seed(page, checkpoint);
   await launch(page);
-  await advance(page, 'consent'); await page.locator('[data-choice=quick]').click();
-  await advance(page, 'photos'); await page.locator('[data-choice=all]').click();
-  await advance(page, 'network'); await page.locator('[data-choice=skipped]').click(); await page.locator('[data-choice=phished]').click();
-  await advance(page, 'cloud');
-  await expect(dialog(page)).toContainText('ظهر دخول غير معتاد');
-  await expect(page.locator('[data-game-restore]')).toHaveCount(0);
-  for (const file of ['orders', 'portraits', 'stories']) await assign(page, file, 'public');
-  await advance(page, 'community'); await page.locator('[data-choice=existing]').click();
-  await advance(page, 'ending');
-  await expect(page.locator('[data-outcome=interrupted]')).toBeVisible();
-  await expect(dialog(page)).toContainText('أدخلت البيانات في صفحة مقلّدة');
-  await dialog(page).getByRole('button', { name: 'غيّر هذا القرار' }).nth(1).click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', 'photos');
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('fed3-opening-night-v1')!).answers)).toMatchObject({ consent: 'quick', photos: null, backup: null, network: null, restored: false, community: null, trained: false });
+  await expect(page.locator('[data-start]')).toContainText('كمّل مهمتك');
+  await start(page);
+  await expect(game(page)).toHaveAttribute('data-stage', '2');
+  await expect.poll(async () => (await position(page)).x).toBeCloseTo(13, 1);
+  await expect.poll(async () => (await position(page)).z).toBeCloseTo(-39, 1);
+  await expect(page.locator('[data-navigation]')).toHaveAttribute('data-sharing', 'true');
+  await page.locator('[data-navigation]').click();
+  await expect(page.locator('[data-navigation]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(game(page)).toContainText('آخر نقطة معروفة ما زالت عندهم');
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).choices.navigation, SAVE_KEY)).toBe(false);
+  await page.locator('[data-pause]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+  await close(page);
+  await page.locator('[data-game-launch]').click();
+  await expect(page.locator('[data-start]')).toBeEnabled({ timeout: 40_000 });
+  await start(page);
+  await expect(game(page)).toHaveAttribute('data-stage', '2');
+  await expect(page.locator('[data-navigation]')).toHaveAttribute('aria-pressed', 'false');
+  await close(page);
+  expect(errors).toEqual([]);
 });
 
-test('modal locks background, pauses, restores focus and resumes exact saved decisions', async ({ page }) => {
+test('navigation kiosk applies a location sharing decision through the actual UI', async ({ page }) => {
+  const errors = pageErrors(page);
   await launch(page);
-  await safeToCloud(page);
-  await assign(page, 'orders', 'market');
-  await page.getByRole('button', { name: 'استراحة', exact: true }).click();
-  await expect(dialog(page)).toHaveAttribute('data-paused', 'true');
-  await expect(page.getByRole('heading', { name: 'خُذ وقتك. الليلة بتستناك.' })).toBeVisible();
-  await page.getByRole('button', { name: 'كمّل اللعب', exact: true }).last().click();
-  await expect(dialog(page)).toHaveAttribute('data-paused', 'false');
-  for (let i = 0; i < 18; i++) {
-    await page.keyboard.press('Tab');
-    expect(await page.evaluate(() => Boolean(document.querySelector('[data-game-dialog]')?.contains(document.activeElement)))).toBe(true);
-  }
-  await page.keyboard.press('Escape');
-  await expect(page.locator('[data-game-controls]')).toHaveCount(0);
-  await page.keyboard.press('Escape');
-  await expect(dialog(page)).toHaveCount(0);
-  await expect(page.locator('[data-game-launch]')).toBeFocused();
-  expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
-  await page.reload(); await page.locator('[data-game-launch]').click();
-  await page.getByRole('button', { name: 'كمّل ليلتك', exact: true }).click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', 'cloud');
-  await openTask(page);
-  await page.locator('[data-file=orders]').click();
-  await expect(page.locator('[data-role=market]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-game-restore]')).toBeVisible();
-  await page.getByRole('button', { name: 'بدء اللعبة من جديد', exact: true }).click();
-  await page.getByRole('button', { name: 'خلّيني أكمّل', exact: true }).click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', 'cloud');
-  await page.getByRole('button', { name: 'بدء اللعبة من جديد', exact: true }).click();
-  await page.getByRole('button', { name: 'امسح وابدأ', exact: true }).click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', 'intro');
+  await start(page);
+  await page.keyboard.down('KeyW');
+  await expect(page.locator('[data-interact]')).toBeVisible({ timeout: 25_000 });
+  await page.keyboard.up('KeyW');
+  await page.locator('[data-interact]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'decision');
+  await expect(page.getByRole('heading', { name: 'أقصر طريق. مين بعرفه معك؟' })).toBeVisible();
+  await page.screenshot({ path: 'test-results/exposed-navigation-decision.png' });
+  await page.locator('[data-choice=share]').click();
+  await expect(game(page)).toHaveAttribute('data-stage', '1');
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  await expect(page.locator('[data-navigation]')).toHaveAttribute('data-sharing', 'true');
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).stage, SAVE_KEY)).toBe(1);
+  await close(page);
+  expect(errors).toEqual([]);
 });
 
-test('Arabic and English mobile layouts support reduced motion without clipping', async ({ page }) => {
-  test.setTimeout(75_000);
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.addInitScript(() => localStorage.removeItem('fed3-opening-night-v1'));
-  for (const locale of ['ar', 'en']) {
-    for (const width of [320, 390, 768]) {
-      await page.setViewportSize({ width, height: 844 });
-      if (page.url() !== 'about:blank') await page.evaluate(() => localStorage.removeItem('fed3-opening-night-v1'));
-      await launch(page, locale);
-      const resume = page.getByRole('button', { name: locale === 'ar' ? 'كمّل ليلتك' : 'Continue your night', exact: true });
-      if (await resume.isVisible()) await resume.click();
-      await expect(dialog(page)).toHaveAttribute('data-calm', 'true');
-      expect(await dialog(page).evaluate(node => node.scrollWidth <= innerWidth)).toBe(true);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await expect(page.locator('[data-game-next]')).toBeEnabled();
-      await expect(page.locator('[data-world]')).toBeVisible();
-      if (width === 390) await page.screenshot({ animations: 'disabled', path: `test-results/game-${locale}-mobile.png` });
-      await advance(page, 'consent');
-      await page.locator('[data-choice=quick]').click();
-      await advance(page, 'photos');
-      const phone = page.locator('[data-device=phone]');
-      expect(await phone.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-      await page.locator('[data-photo-scope]').click();
-      await expect(page.locator('[data-choice=selected]')).toBeDisabled();
-      await page.locator('[data-photo="0"]').click();
-      await expect(page.locator('[data-choice=selected]')).toBeEnabled();
-      if (width === 390) await page.screenshot({ animations: 'disabled', path: `test-results/game-${locale}-phone.png` });
-      await page.locator('[data-choice=selected]').click();
-      await advance(page, 'network');
-      await page.locator('[data-choice=prepared]').click();
-      await page.locator('[data-choice=mobile]').click();
-      await advance(page, 'cloud');
-      const desktop = page.locator('[data-device=desktop]');
-      expect(await desktop.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-      await finishSafe(page);
-      await expect(page.locator('[data-outcome=partial]')).toBeVisible();
-      await page.keyboard.press('Escape');
-      await page.keyboard.press('Escape');
+test('portrait and landscape touch controls allow simultaneous movement and looking', async ({ browser }) => {
+  const context: BrowserContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  const errors = pageErrors(page);
+  try {
+    await launch(page);
+    await start(page);
+    await expect(game(page)).toHaveAttribute('data-touch', 'true');
+    const session = await context.newCDPSession(page);
+    for (const size of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+      await page.setViewportSize(size);
+      await assertCanvasFits(page);
+      const stick = page.locator('[data-joystick]');
+      await expect(stick).toBeVisible();
+      const box = (await stick.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height).toBeLessThanOrEqual(size.height + 1);
+      const x = box.x + box.width / 2, y = box.y + box.height / 2;
+      const lookX = Math.round(size.width * .67), lookY = Math.round(size.height * .47);
+      const before = await position(page);
+      await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, x, y }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x, y: y - 39 }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, x, y: y - 39 }, { id: 2, x: lookX, y: lookY }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x, y: y - 39 }, { id: 2, x: lookX + 45, y: lookY - 15 }] });
+      await expect.poll(async () => (await position(page)).z, { timeout: 12_000 }).toBeLessThan(before.z - .45);
+      await expect.poll(async () => Math.abs((await position(page)).x - before.x), { timeout: 8_000 }).toBeGreaterThan(.025);
+      await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.locator('[data-pulse]').tap();
+      await expect(page.locator('[data-pulse]')).toBeDisabled();
+      await page.screenshot({ path: `test-results/exposed-touch-${size.width > size.height ? 'landscape' : 'portrait'}.png` });
+      await page.locator('[data-pause]').tap();
+      await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+      await page.locator('[data-resume]').tap();
+      await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+      await expect(page.locator('[data-pulse]')).toBeEnabled({ timeout: 12_000 });
     }
-  }
+    await session.detach();
+    await close(page);
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
 });
 
-test('character clicks open object tasks; room movement and popup focus remain usable', async ({ page }) => {
-  await launch(page);
-  await expect(page.locator('[data-game-controls]')).toHaveCount(0);
-  const karim = page.locator('[data-person=karim]');
-  const before = await karim.evaluate(node => getComputedStyle(node).transform);
-  await page.locator('[data-game-next]').click();
-  await expect(dialog(page)).toHaveAttribute('data-stage', 'consent');
-  await expect.poll(() => karim.evaluate(node => getComputedStyle(node).transform)).not.toBe(before);
-  await expect(page.locator('[data-game-controls]')).toHaveCount(0);
-  await page.locator('[data-person=yaser]').click();
-  await expect(page.locator('[data-device=person]')).toBeVisible();
-  await expect(page.locator('[data-choice]')).toHaveCount(0);
-  await page.keyboard.press('Escape');
-  await expect(page.locator('[data-person=yaser]')).toBeFocused();
-  await karim.focus(); await page.keyboard.press('Enter');
-  await expect(page.locator('[data-device=phone]')).toBeVisible();
-  expect(await page.locator('[data-world]').evaluate(node => !!node.closest('[inert]'))).toBe(true);
-  await page.locator('[data-choice=quick]').click();
-  await page.keyboard.press('Escape');
-  await expect(karim).toBeFocused();
-  await karim.click();
-  await expect(page.locator('[data-choice=quick]')).toHaveCount(0);
-  await expect(page.locator('[data-game-next]')).toBeEnabled();
-  await advance(page, 'photos');
-  await page.locator('[data-photo-scope]').click();
-  await expect(page.locator('[data-photo="1"]')).toBeDisabled();
-  await page.locator('[data-photo="0"]').click();
-  await page.locator('[data-choice=selected]').click();
-  await expect(page.locator('[data-photo][data-shared=true]')).toHaveCount(1);
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('fed3-opening-night-v1')!).answers.photos)).toBe('selected');
-  await page.keyboard.press('Escape');
-  await dialog(page).getByRole('button', { name: 'تقليل الحركة', exact: true }).click();
-  await openTask(page);
-  await expect(page.locator('[data-device=phone]')).toHaveCSS('opacity', '1');
-});
-
-test('blocked storage and blocked external network do not stop a complete playthrough', async ({ page }) => {
-  const external: string[] = []; const posts: string[] = []; const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+test('blocked storage and external requests do not prevent playing or pausing', async ({ page }) => {
+  const errors = pageErrors(page);
+  const posts: string[] = [], external: string[] = [];
   page.on('request', request => { if (request.method() === 'POST') posts.push(request.url()); });
   await page.route('**/*', route => {
     const url = new URL(route.request().url());
-    if (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost') { external.push(url.toString()); return route.abort(); }
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname)) { external.push(url.toString()); return route.abort(); }
     return route.continue();
   });
-  await page.addInitScript(() => { Object.defineProperty(Storage.prototype, 'getItem', { value: () => { throw new DOMException('blocked'); } }); Object.defineProperty(Storage.prototype, 'setItem', { value: () => { throw new DOMException('blocked'); } }); });
-  await launch(page); await safeToCloud(page); await finishSafe(page);
-  await expect(page.locator('[data-outcome=ready]')).toBeVisible();
-  await expect(dialog(page)).toContainText('يمكنك المتابعة بدون حفظ');
-  expect(external).toEqual([]); expect(posts).toEqual([]); expect(errors).toEqual([]);
+  await page.addInitScript(() => {
+    Object.defineProperty(Storage.prototype, 'getItem', { value: () => { throw new DOMException('Storage blocked'); } });
+    Object.defineProperty(Storage.prototype, 'setItem', { value: () => { throw new DOMException('Storage blocked'); } });
+  });
+  await launch(page);
+  await start(page);
+  const initial = await position(page);
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(async () => (await position(page)).z).toBeLessThan(initial.z - .3);
+  await page.keyboard.up('ArrowUp');
+  await page.locator('[data-pause]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+  await expect(game(page)).toContainText('التخزين غير متاح');
+  await close(page);
+  expect(external).toEqual([]);
+  expect(posts.filter(url => !url.includes('__nextjs'))).toEqual([]);
+  expect(errors).toEqual([]);
 });
 
-test('idle animation timing and repeated open/close remain bounded', async ({ page }) => {
-  await launch(page);
-  const timing = await page.evaluate(async () => {
-    const samples: number[] = []; let last = performance.now();
-    await new Promise<void>(resolve => {
-      const tick = (time: number) => { samples.push(time - last); last = time; if (samples.length < 90) requestAnimationFrame(tick); else resolve(); };
-      requestAnimationFrame(tick);
-    });
-    samples.shift(); samples.sort((a, b) => a - b);
-    return { medianMs: samples[Math.floor(samples.length / 2)], p95Ms: samples[Math.floor(samples.length * .95)], samples: samples.length };
+test('unsupported WebGL shows a readable fallback and restores the page on exit', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, kind: string, ...args: unknown[]) {
+      if (/webgl/i.test(kind)) return null;
+      return Reflect.apply(original, this, [kind, ...args]);
+    } as typeof HTMLCanvasElement.prototype.getContext;
   });
-  expect(timing.medianMs).toBeLessThan(55);
-  for (let i = 0; i < 4; i++) {
-    await page.keyboard.press('Escape'); await expect(dialog(page)).toHaveCount(0);
-    await page.locator('[data-game-launch]').click(); await expect(dialog(page)).toBeVisible();
-    await expect(page.locator('[data-world]')).toHaveCount(1);
-  }
-  await page.keyboard.press('Escape');
-  expect(await page.evaluate(() => document.querySelectorAll('dialog').length)).toBe(0);
+  await page.goto(`${baseURL}/ar/alternatives/#game`);
+  await page.locator('[data-game-launch]').click();
+  await expect(game(page)).toBeVisible();
+  await expect(game(page).getByRole('alert')).toContainText('WebGL');
+  await expect(game(page).getByRole('heading', { name: 'تعذّر تشغيل المدينة' })).toBeVisible();
+  await game(page).getByRole('button', { name: 'ارجع للبدائل' }).click();
+  await expect(game(page)).toHaveCount(0);
+  await expect(page.locator('[data-game-launch]')).toBeFocused();
   expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
-  writeFileSync('test-results/game-timing.json', JSON.stringify({ ...timing, note: '90 animation-frame samples from headless desktop Chrome. Full-screen SVG with no game loop. Device-dependent observation.' }, null, 2));
+});
+
+test('English localization and repeated open/close keep one canvas and restore focus', async ({ page }) => {
+  test.setTimeout(150_000);
+  const errors = pageErrors(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await launch(page, 'en');
+  await expect(game(page)).toHaveAccessibleName('Exposed game');
+  await expect(game(page)).toHaveAttribute('dir', 'ltr');
+  await expect(page.getByRole('heading', { name: 'Every step. Leaves a trace.' })).toBeVisible();
+  for (let i = 0; i < 2; i++) {
+    await expect(page.locator('[data-world] canvas')).toHaveCount(1);
+    await start(page);
+    await page.keyboard.press('Escape');
+    await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+    expect(await game(page).evaluate(node => ({ open: (node as HTMLDialogElement).open, modal: node.matches(':modal') })), `paused iteration ${i}`).toEqual({ open: true, modal: true });
+    await page.keyboard.press('Escape');
+    await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+    expect(await game(page).evaluate(node => ({ open: (node as HTMLDialogElement).open, modal: node.matches(':modal') })), `resumed iteration ${i}`).toEqual({ open: true, modal: true });
+    await expect(page.locator('[data-pause]')).toBeVisible({ timeout: 5_000 });
+    await page.locator('[data-pause]').click();
+    await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+    await expect(page.getByRole('button', { name: 'Reduce camera motion' })).toHaveAttribute('aria-pressed', 'true');
+    if (i === 0) {
+      await page.locator('[data-resume]').focus();
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('button', { name: 'Fullscreen', exact: true })).toBeFocused();
+      await page.keyboard.press('Shift+Tab');
+      await expect(page.locator('[data-resume]')).toBeFocused();
+    }
+    await close(page);
+    if (i < 1) {
+      await page.locator('[data-game-launch]').click();
+      await expect(page.locator('[data-start]')).toBeEnabled({ timeout: 40_000 });
+    }
+  }
+  expect(errors).toEqual([]);
+});
+
+test('small phone portrait and landscape layouts keep controls on screen', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  try {
+    await seed(page, { version: 1, stage: 1, choices: { navigation: false, contacts: false, cloud: false }, seconds: 0, pulses: 0 });
+    await launch(page);
+    await start(page);
+    for (const size of [{ width: 320, height: 568 }, { width: 568, height: 320 }]) {
+      await page.setViewportSize(size);
+      await assertCanvasFits(page);
+      await expect(page.locator('[data-joystick]')).toBeVisible();
+      await expect(page.locator('[data-navigation]')).toBeVisible();
+      for (const selector of ['[data-joystick]', '[data-navigation]', '[data-pulse]', '[data-game-close]']) {
+        const box = (await page.locator(selector).boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.y).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(size.width + 1);
+        expect(box.y + box.height).toBeLessThanOrEqual(size.height + 1);
+      }
+      await page.screenshot({ path: `test-results/exposed-small-${size.width > size.height ? 'landscape' : 'portrait'}.png` });
+    }
+    await close(page);
+  } finally { await context.close(); }
 });

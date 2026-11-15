@@ -31,9 +31,9 @@ test('the streamlined app showcase and all five comparisons keep matching guides
     await expect(page.locator('#catalog').getByRole('link', { name: `صفحة التطبيق: ${alternative}`, exact: true })).toHaveAttribute('href', `/ar/apps/${id}/`);
     expect(await page.locator('[data-comparison-row]').evaluateAll(rows => rows.every(row => row.querySelectorAll('a[href^="https://"]').length > 0))).toBe(true);
   }
-  await expect(page.locator('#game')).toContainText('بكرا الافتتاح');
+  await expect(page.locator('#game')).toContainText('مكشوف');
   await expect(page.locator('#game [data-game-launch]')).toBeVisible();
-  await expect(page.locator('[data-game-dialog]')).toHaveCount(0);
+  await expect(page.locator('[data-exposed-game]')).toHaveCount(0);
   const featureTab = page.locator('[data-comparison-group="features"]');
   await featureTab.click();
   await expect(featureTab).toHaveAttribute('aria-selected', 'true');

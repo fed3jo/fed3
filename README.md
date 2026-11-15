@@ -20,7 +20,7 @@ Run the focused home-page checks with `npx playwright test tests/video-stations.
 
 The app uses Next.js 16.4.3 App Router, React 19.3.1, TypeScript 7, npm with `package-lock.json`, CSS modules and standalone Node output. GSAP is not an npm dependency. The 3.13.0 UMD scripts are bundled in `public/vendor/` and load through `next/script` after hydration. ScrollTrigger loads after core is ready. Sources and the applicable license reference are retained beside the scripts.
 
-The alternatives page includes [Opening Tomorrow](docs/game.md), a bilingual local game about permissions, independent file recovery and community learning. Its code loads when the visitor opens the game. The source documents below include historical implementation notes; `docs/game.md`, `docs/alternatives.md`, and `docs/verification.md` describe the current features and checks.
+The alternatives page includes [Exposed / مكشوف](docs/game.md), a bilingual 3D city game about tracking and privacy. Carry a fictional team's files across the city, evade drones, and see how sharing your location changes the pursuit. Its code loads when the visitor opens the game, with keyboard/mouse and touch controls. The source documents below include historical implementation notes; `docs/game.md` and `docs/alternatives.md` describe current features, while `docs/verification.md` records dated checks.
 
 ## Run locally
 

@@ -1,18 +1,10 @@
 # Verification
 
-## Current checks, 27 October 2026
+## Game verification
 
-The local standalone production build passes all 36 tests: 10 unit tests and 26 Chrome browser tests. Production compilation, TypeScript checking, standalone preparation, and validation of all 240 frame assets pass. The new [Opening Tomorrow game](game.md) is available in the alternatives page in both languages.
+The Exposed 3D game replaces the previous game. Production compilation, standalone preparation and TypeScript checking pass. Seventeen unit tests pass, including drone knowledge, visibility, save validation and street routes. Focused browser checks cover all five app comparisons, keyboard controls, two-finger touch, 320/390-pixel portrait layouts, 568/844-pixel landscape layouts, Escape, repeated open/close and focus restoration.
 
-Game logic tests cover 256 decision combinations, 64 permission combinations, invalid transitions, save validation, and causal replay. Browser tests complete prepared and unprepared routes, resume progress after reload, cancel and confirm restart, pause and close, keep keyboard focus inside the modal, restore focus on exit, and check widths of 320, 390, and 768 pixels in both languages. A complete prepared playthrough passes with external requests blocked and browser storage disabled. No gameplay POST requests are made.
-
-The game bundle is absent before launch. This run records 27,030 encoded bytes for its additional JavaScript and CSS, excluding the cover and fonts, in `test-results/game-bundle.json`. Idle frame sampling is recorded separately in `test-results/game-timing.json`. These are headless Chrome observations on this Windows machine, not guarantees for every phone or network. Screenshots of the introduction, cloud task, results, and mobile layouts were inspected.
-
-The SVG night-light overlay follows the room silhouette. Scene changes, pause/confirmation dismissal, and modal tab boundaries preserve keyboard focus. CSS animation and text reveal pause when the document is hidden or the player takes a break. Local GSAP and ScrollTrigger copies remove the landing page's runtime dependency on jsDelivr. Browser tests for the existing landing journey, alternatives, app details, cloud page, and survey pass.
-
-Landing tests inject explicit file-download failures, control the browser-language preference, wait for the opening overlay to release scrolling, and use the current navigation labels. Healthy source images are not replaced. Historical fixture notes below describe the earlier asset state.
-
-Sound effects are generated locally. Optional narration uses an installed local device voice when available. Studio or human voice recordings are not bundled. The preview runs at `http://127.0.0.1:3100/ar/alternatives/#game`; no external deployment was performed.
+The complete independent-copy route reaches all four stations and the delivery ending through the real game controls. The automated player pauses between input bursts while inspecting the interface; no teleportation, health override or internal engine API is used. These checks use desktop browser emulation, not physical Android or iPhone hardware. See [the game documentation](game.md) for controls, assets and verification commands.
 
 ## Current checks, 25 October 2026
 
