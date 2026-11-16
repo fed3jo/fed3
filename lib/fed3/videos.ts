@@ -15,6 +15,13 @@ export const alternativesHeroVideo: IntroVideoSource = {
   duration: 8,
 };
 
+export const cloudIntroVideo: IntroVideoSource = {
+  src: '/videos/cloud-intro-v1-720p.mp4',
+  mobileSrc: '/videos/cloud-intro-v1-360p.mp4',
+  poster: '/videos/cloud-intro-v1-poster.webp',
+  duration: 8,
+};
+
 // Use direct video file URLs, not YouTube or Vimeo page URLs. Rebuild after changing these variables.
 export const stationVideos = {
   alternatives: {

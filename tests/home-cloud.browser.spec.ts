@@ -6,7 +6,7 @@ test('local cloud has its own navigation, working access diagram and sourced set
     await page.setViewportSize({ width: 1440, height: 960 });
     const response = await page.goto(`/${locale}/home-cloud/`);
     expect(response?.status()).toBe(200);
-    await expect(page.locator('[data-cloud-guide-hero]')).toContainText(locale === 'ar' ? 'سحابة بتخصّك.' : 'A cloud you run.');
+    await expect(page.locator('[data-cloud-guide-hero]')).toContainText(locale === 'ar' ? 'السحابة المحلية' : 'Your local cloud');
     await expect(page.locator('[data-cloud-guide-hero] a[href*="1CqsiVg5j9hzYkPLR7GyGW_tYCFayS0zrEDtq1Sx0PC4"]')).toHaveCount(1);
     await expect(page.locator('[data-cloud-requirements] table')).toContainText('2 GB RAM');
     await expect(page.locator('[data-cloud-requirements] table')).toContainText('4 GB RAM');
@@ -16,7 +16,7 @@ test('local cloud has its own navigation, working access diagram and sourced set
     await expect(page.locator('[data-cloud-daily] details').nth(2).locator('p')).toContainText(locale === 'ar' ? 'تاريخ الانتهاء' : 'expiry date');
     await expect(page.locator('[data-cloud-daily] img')).toHaveAttribute('src', /home-cloud-daily-v1/);
     const nav = page.locator('#cloud-navigation');
-    expect(await nav.locator('a').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')))).toEqual(['#cloud-overview', '#cloud-flow', '#cloud-steps', '#cloud-readiness']);
+    expect(await nav.locator('a[href^="#"]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')))).toEqual(['#cloud-overview', '#cloud-flow', '#cloud-steps', '#cloud-readiness']);
     await expect(page.locator('#alternatives-navigation')).toHaveCount(0);
     await page.screenshot({ path: `test-results/cloud-hero-${locale}.png` });
     await nav.locator('a[href="#cloud-flow"]').click();
@@ -48,6 +48,7 @@ test('published survey validates required answers, sends once with consent and d
   test.skip(process.env.CMS_TEST_FIXTURE!=='1','Requires the local engagement fixture, never production.');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/ar/home-cloud/#cloud-readiness');
+  await page.locator('#cloud-readiness>details>summary').click();
   const survey=page.locator('[data-readiness-survey]');
   await expect(survey.locator('[data-survey-question]')).toHaveCount(6);
   await survey.getByRole('button',{name:'القسم التالي',exact:true}).click();
@@ -99,6 +100,7 @@ test('mobile cloud, app facts and clustered app logos stay contained in both lan
       await page.locator('#cloud-navigation a[href="#cloud-readiness"]').click();
       await expect(menu).toHaveAttribute('aria-expanded', 'false');
       await expect(page.locator('#cloud-readiness')).toBeFocused();
+      await page.locator('#cloud-readiness>details>summary').click();
       if(process.env.CMS_TEST_FIXTURE==='1')await expect(page.locator('[data-readiness-survey]')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (width === 390) await page.screenshot({ path: `test-results/cloud-survey-mobile-${locale}.png` });

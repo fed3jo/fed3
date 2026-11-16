@@ -70,14 +70,18 @@ test('the overview stays clear of the divider on desktop and mobile', async ({ p
   }
 });
 
-test('the complete cloud picture and captions fit beside the copy on desktop', async ({ page }) => {
-  await page.emulateMedia({reducedMotion:'reduce'});
-  for (const [width,height] of [[1905,970],[1440,900],[1024,768]]) {
-    await page.setViewportSize({width,height}); await page.goto('/ar/home-cloud/');
-    const image=page.locator('[data-cloud-guide-hero] figure>img');
-    await expect(image).toHaveCSS('object-fit','contain');
-    await expect(image).toBeInViewport({ratio:1});
-    await expect(page.locator('[data-cloud-guide-hero] figcaption')).toBeInViewport({ratio:1});
-    expect(await image.evaluate(img=>img.getBoundingClientRect().bottom)).toBeLessThanOrEqual(height);
+test('the cloud video fits beside the copy on desktop', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const locale of ['ar', 'en']) for (const [width, height] of [[1905,970],[1440,900],[1024,768]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`/${locale}/home-cloud/`);
+    const art = page.locator('[data-intro-variant="cloud"] video');
+    await expect(art).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('[data-cloud-guide-hero] video')).toHaveAttribute('poster', '/videos/cloud-intro-v1-poster.webp');
+    const graphic = (await art.boundingBox())!;
+    const copy = (await page.locator('[data-cloud-guide-hero] h1').boundingBox())!;
+    if (locale === 'ar') expect(graphic.x + graphic.width).toBeLessThan(copy.x);
+    else expect(copy.x + copy.width).toBeLessThan(graphic.x);
+    expect(graphic.y + graphic.height).toBeLessThanOrEqual(height);
   }
 });
