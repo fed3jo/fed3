@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent, type MouseEvent } from 'react';
 import type { Locale } from '@/lib/fed3/config';
 import { checkpoints, readRun, SAVE_KEY, type SavedRun } from '@/lib/fed3/exposed';
 import { ExposedEngine, type Snapshot } from './engine';
@@ -33,32 +33,12 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
   const [touch, setTouch] = useState(false);
   const [codeNeeded, setCodeNeeded] = useState(false), [teamCode, setTeamCode] = useState('');
   const [briefing, setBriefing] = useState(false), [briefingResume, setBriefingResume] = useState(false);
-  const [charCount, setCharCount] = useState(0), [typingComplete, setTypingComplete] = useState(false);
   const playing = s?.mode === 'playing';
 
   const briefingText = ar
     ? `• معك بيانات شخصية وملفات حساسة جداً تخصك وتخص فريقك.\n\n• في درون مراقبة في سماء المدينة، بحاول يرصد موقعك ويكشف بياناتك في أي لحظة.\n\n• سلاح النبضة (EMP): معك سلاح نبضة كهرومغناطيسية، استخدمه لتعطيل الدرون بشكل مؤقت عند اقترابه حتى تقدر تهرب وتغيّر مسارك.\n\n• هدف الفوز: تحرّك بحذر عبر الشوارع، وتجنّب كشف موقعك، واوصل لآخر مكان في المدينة (مقر Fed3) لتأمين البيانات بنجاح وتفوز باللعبة.`
     : `• You are carrying sensitive personal data and critical files belonging to you and your team.\n\n• A surveillance drone patrols the city skies, actively scanning to detect your location and compromise your data at any moment.\n\n• EMP Pulse Weapon: You are equipped with an EMP pulse weapon. Use it to temporarily disable the drone when it gets close so you can evade and escape.\n\n• Objective to Win: Move carefully through the streets, avoid detection, and reach the final safehouse (Fed3 HQ) to secure your data and win the game.`;
 
-  useEffect(() => {
-    if (!briefing) { setCharCount(0); setTypingComplete(false); return; }
-    if (calm) { setCharCount(briefingText.length); setTypingComplete(true); return; }
-    setCharCount(0); setTypingComplete(false);
-    const timer = setInterval(() => {
-      setCharCount(c => {
-        const next = c + 2;
-        if (next >= briefingText.length) {
-          clearInterval(timer);
-          setTypingComplete(true);
-          return briefingText.length;
-        }
-        return next;
-      });
-    }, 16);
-    return () => clearInterval(timer);
-  }, [briefing, briefingText, calm]);
-
-  const skipTyping = () => { setCharCount(briefingText.length); setTypingComplete(true); };
   const openBriefing = (resume: boolean) => { setBriefingResume(resume); setBriefing(true); };
   const startFromBriefing = () => { setBriefing(false); start(briefingResume); };
   useEffect(() => {
@@ -98,6 +78,17 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
     if (knob.current) knob.current.style.transform = `translate(${dx * scale}px,${dy * scale}px)`;
   };
   const stopStick = (e: PointerEvent<HTMLDivElement>) => { if (stick.current?.id !== e.pointerId) return; stick.current = null; if (engine.current) { engine.current.controls.x = 0; engine.current.controls.y = 0; } if (knob.current) knob.current.style.transform = 'translate(0px,0px)'; };
+  const pressAction = (action: () => void) => ({
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      if (!playing || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      action();
+    },
+    onClick: (e: MouseEvent<HTMLButtonElement>) => { if (e.detail === 0) action(); },
+  });
+  const toggleSprint = () => { if (!engine.current) return; const next = !engine.current.controls.sprint; engine.current.controls.sprint = next; setSprint(next); };
+  const toggleCrouch = () => { if (!engine.current) return; const next = !engine.current.controls.crouch; engine.current.controls.crouch = next; setCrouch(next); };
   const full = () => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined); else void root.current?.requestFullscreen?.().catch(() => undefined); };
   const start = (resume: boolean) => { engine.current?.start(resume ? saved : null); setSaved(null); };
   const options = <div className={styles.settings}>
@@ -131,15 +122,15 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
       <div className={styles.status} data-alert={s.alert}><span className={styles.statusDot} />{labels[s.alert]}<small dir="ltr">{time(s.seconds)}</small></div>
       <div className={styles.crosshair}><span /><i /></div>
       {s.message && <div className={styles.radio} role="status"><span>FED3 / {ar ? 'الاتصال' : 'COMMS'}</span><p>{s.message}</p></div>}
-      {s.near && <button className={styles.interact} onClick={() => engine.current?.interact()} data-interact><kbd>E</kbd>{ar ? s.stage === 3 ? 'سلّم الملفات' : 'افتح المحطة' : s.stage === 3 ? 'Deliver files' : 'Open station'}<span>↗</span></button>}
-      <div className={styles.bottomHud}><div className={styles.meters}><div><Icon name="shield" /><span>{ar ? 'القدرة' : 'INTEGRITY'}</span><b>{Math.ceil(s.health)}</b><i style={{ '--fill': `${s.health}%` } as React.CSSProperties} /></div><div><Icon name="run" /><span>{ar ? 'الطاقة' : 'STAMINA'}</span><b>{Math.ceil(s.stamina)}</b><i style={{ '--fill': `${s.stamina}%` } as React.CSSProperties} /></div></div><div className={styles.desktopHelp}><span><kbd>W A S D</kbd> {ar ? 'حركة' : 'MOVE'}</span><span><kbd>SHIFT</kbd> {ar ? 'ركض' : 'SPRINT'}</span><span><kbd>SPACE</kbd> {ar ? 'قفز' : 'JUMP'}</span><span><kbd>F</kbd> EMP</span><span><kbd>C</kbd> {ar ? 'انخفاض' : 'CROUCH'}</span></div></div>
+      {s.near && <button className={styles.interact} {...pressAction(() => engine.current?.interact())} data-interact><kbd>Enter</kbd>{ar ? s.stage === 3 ? 'سلّم الملفات' : 'افتح المحطة' : s.stage === 3 ? 'Deliver files' : 'Open station'}<span>↗</span></button>}
+      <div className={styles.bottomHud}><div className={styles.meters}><div><Icon name="shield" /><span>{ar ? 'القدرة' : 'INTEGRITY'}</span><b>{Math.ceil(s.health)}</b><i style={{ '--fill': `${s.health}%` } as React.CSSProperties} /></div><div><Icon name="run" /><span>{ar ? 'الطاقة' : 'STAMINA'}</span><b>{Math.ceil(s.stamina)}</b><i style={{ '--fill': `${s.stamina}%` } as React.CSSProperties} /></div></div><div className={styles.desktopHelp}><span><kbd>W A S D</kbd> {ar ? 'حركة' : 'MOVE'}</span><span><kbd>SHIFT</kbd> {ar ? 'ركض' : 'SPRINT'}</span><span><kbd>SPACE</kbd> {ar ? 'قفز' : 'JUMP'}</span><span><kbd>F</kbd> EMP</span><span><kbd>Enter</kbd> {ar ? 'افتح المحطة' : 'OPEN STATION'}</span><span><kbd>C</kbd> {ar ? 'انخفاض' : 'CROUCH'}</span></div></div>
       <div className={styles.tools}>
-        {s.stage > 0 && <button className={styles.tracking} onClick={() => engine.current?.toggleNavigation()} data-sharing={s.choices.navigation} aria-pressed={s.choices.navigation} aria-label={ar ? 'تبديل مشاركة الموقع' : 'Toggle location sharing'} data-navigation><Icon name="signal" /><span>{ar ? s.choices.navigation ? 'اقطع بثّ الموقع' : 'الموقع غير مشارك' : s.choices.navigation ? 'STOP LOCATION SHARING' : 'LOCATION PRIVATE'}</span><kbd>N</kbd></button>}
-        <button className={styles.emp} onClick={() => engine.current?.shoot()} disabled={s.cooldown > 0} aria-label={ar ? 'نبضة تعطيل الدرون' : 'EMP pulse'} data-pulse><Icon name="pulse" /><span>{s.cooldown > 0 ? `${s.cooldown.toFixed(1)}s` : ar ? 'نبضة' : 'EMP'}</span></button>
+        {s.stage > 0 && <button className={styles.tracking} {...pressAction(() => engine.current?.toggleNavigation())} data-sharing={s.choices.navigation} aria-pressed={s.choices.navigation} aria-label={ar ? 'تبديل مشاركة الموقع' : 'Toggle location sharing'} data-navigation><Icon name="signal" /><span>{ar ? s.choices.navigation ? 'اقطع بثّ الموقع' : 'الموقع غير مشارك' : s.choices.navigation ? 'STOP LOCATION SHARING' : 'LOCATION PRIVATE'}</span><kbd>N</kbd></button>}
+        <button className={styles.emp} {...pressAction(() => engine.current?.shoot())} disabled={s.cooldown > 0} aria-label={ar ? 'نبضة تعطيل الدرون' : 'EMP pulse'} data-pulse><Icon name="pulse" /><span>{s.cooldown > 0 ? `${s.cooldown.toFixed(1)}s` : ar ? 'نبضة' : 'EMP'}</span></button>
       </div>
       <div className={styles.touchControls}>
         <div className={styles.stick} role="group" aria-label={ar ? 'عصا الحركة' : 'Movement joystick'} onPointerDown={joystick} onPointerMove={moveStick} onPointerUp={stopStick} onPointerCancel={stopStick} onLostPointerCapture={stopStick} data-joystick><span className={styles.stickArrows}>↑<br />←　→<br />↓</span><span ref={knob} className={styles.knob} /></div>
-        <div className={styles.touchActions}><button aria-label={ar ? 'قفز' : 'Jump'} onPointerDown={e => { e.preventDefault(); engine.current?.jump(); }}><Icon name="jump" /><span>{ar ? 'قفز' : 'JUMP'}</span></button><button aria-label={ar ? 'ركض' : 'Sprint'} aria-pressed={sprint} onClick={() => { const next = !sprint; setSprint(next); if (engine.current) engine.current.controls.sprint = next; }}><Icon name="run" /></button><button aria-label={ar ? 'انخفاض' : 'Crouch'} aria-pressed={crouch} onClick={() => { const next = !crouch; setCrouch(next); if (engine.current) engine.current.controls.crouch = next; }}>↓</button></div>
+        <div className={styles.touchActions}><button aria-label={ar ? 'قفز' : 'Jump'} {...pressAction(() => engine.current?.jump())}><Icon name="jump" /><span>{ar ? 'قفز' : 'JUMP'}</span></button><button aria-label={ar ? 'ركض' : 'Sprint'} aria-pressed={sprint} {...pressAction(toggleSprint)}><Icon name="run" /></button><button aria-label={ar ? 'انخفاض' : 'Crouch'} aria-pressed={crouch} {...pressAction(toggleCrouch)}>↓</button></div>
         <span className={styles.lookHint}>{ar ? 'اسحب على المشهد للنظر' : 'DRAG THE SCENE TO LOOK'}</span>
       </div>
     </>}
@@ -147,72 +138,22 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
     {briefing && !error && (
       <div className={styles.briefingOverlay} data-briefing role="dialog" aria-modal="true" aria-label={ar ? 'برقية المهمة' : 'Mission Briefing'}>
         <section className={styles.briefingCard}>
-          <header className={styles.briefingHeader}>
-            <div className={styles.briefingBadge}>
-              <span className={styles.briefingDot} />
-              <span>{ar ? 'برقية المهمة · إرسال مشفّر' : 'MISSION BRIEFING · ENCRYPTED LINK'}</span>
-            </div>
-            <small className={styles.briefingStatus}>
-              {typingComplete ? (ar ? 'اكتمل البث' : 'TRANSMISSION COMPLETE') : (ar ? 'جارٍ فك التشفير…' : 'DECRYPTING…')}
-            </small>
-          </header>
-
-          <h2 className={styles.briefingTitle}>
-            {ar ? 'حماية بياناتك · تعطيل الدرون والوصول للمقر' : 'Protect Your Data · Stun the Drone & Escape'}
-          </h2>
-
-          <div
-            className={styles.briefingBody}
-            onClick={skipTyping}
-            role="region"
-            aria-live="polite"
-            title={ar ? 'انقر لإظهار كامل النص' : 'Click to reveal all text'}
-          >
-            <p className={styles.briefingText}>
-              {briefingText.slice(0, charCount)}
-              {!typingComplete && <span className={styles.cursor} aria-hidden="true" />}
-            </p>
+          <div className={styles.briefingBody}>
+            {briefingText.split('\n\n').map((paragraph, i) => {
+              const text = paragraph.replace(/^• /, '');
+              const highlight = i >= 2 ? text.indexOf(':') + 1 : text.indexOf(ar ? '،' : '.');
+              const end = highlight > 0 ? highlight : text.length;
+              return <p className={styles.briefingText} key={i}><strong><mark>{text.slice(0, end)}</mark>{text.slice(end)}</strong></p>;
+            })}
           </div>
-
-          <div className={styles.briefingControls}>
-            <div className={styles.controlGroup}>
-              <b>{ar ? 'تحكم الكمبيوتر:' : 'Desktop Controls:'}</b>
-              <span><kbd>W A S D</kbd> {ar ? 'حركة' : 'Move'} · <kbd>F</kbd> {ar ? 'سلاح نبضة (EMP)' : 'EMP Pulse'}</span>
-              <span><kbd>Space</kbd> {ar ? 'قفز' : 'Jump'} · <kbd>Shift</kbd> {ar ? 'ركض' : 'Sprint'}</span>
-            </div>
-            <div className={styles.controlGroup}>
-              <b>{ar ? 'تحكم الهاتف:' : 'Mobile Controls:'}</b>
-              <span>{ar ? 'عصا اللمس للحركة' : 'Touch joystick to move'}</span>
-              <span>{ar ? 'زر النبضة لتعطيل الدرون' : 'EMP button to stun drone'} · {ar ? 'سحب الشاشة للنظر' : 'Drag screen to look'}</span>
-            </div>
-          </div>
-
-          <div className={styles.briefingActions}>
-            <button
-              className={styles.primary}
-              onClick={startFromBriefing}
-              data-briefing-start
-              autoFocus
-            >
-              <span>{briefingResume ? (ar ? 'متابعة المهمة وانطلاق' : 'Resume Mission & Deploy') : (ar ? 'ابدأ المهمة وانطلاق' : 'Deploy into City')}</span>
-              <span>↗</span>
-            </button>
-            {!typingComplete && (
-              <button
-                type="button"
-                className={styles.secondary}
-                onClick={skipTyping}
-                data-briefing-skip
-              >
-                {ar ? 'تخطي الشرح' : 'Skip typing'}
-              </button>
-            )}
-          </div>
+          <button className={styles.briefingStart} onClick={startFromBriefing} data-briefing-start autoFocus>
+            {briefingResume ? (ar ? 'متابعة المهمة' : 'Resume mission') : (ar ? 'ابدأ المهمة' : 'Start mission')}
+          </button>
         </section>
       </div>
     )}
     {s?.mode === 'decision' && <div className={styles.overlay}><section className={styles.panel} aria-labelledby="decision-title"><p className={styles.chapter}>{decisionCopy[locale][s.stage].kicker}</p><h2 id="decision-title">{decisionCopy[locale][s.stage].title}</h2><p>{decisionCopy[locale][s.stage].text}</p><div className={styles.choices}><button onClick={() => engine.current?.choose(true)} data-choice="share"><Icon name="signal" /><span>{decisionCopy[locale][s.stage].yes}<small>{decisionCopy[locale][s.stage].yesNote}</small></span><b>↗</b></button><button onClick={() => { if (s.stage === 1) setCodeNeeded(true); else engine.current?.choose(false); }} data-choice="private"><Icon name="shield" /><span>{decisionCopy[locale][s.stage].no}<small>{decisionCopy[locale][s.stage].noNote}</small></span><b>↗</b></button></div>{codeNeeded && <form className={styles.codeForm} onSubmit={e => { e.preventDefault(); if (teamCode === '1407') engine.current?.choose(false); }}><label htmlFor="team-code">{ar ? 'رسالة الفريق: رمز البوابة 1407' : 'Team message: gate code 1407'}</label><div><input id="team-code" aria-label={ar ? 'رمز الفريق' : 'Team code'} inputMode="numeric" autoComplete="off" maxLength={4} value={teamCode} onChange={e => setTeamCode(e.target.value.replace(/[^0-9]/g, ''))} data-team-code autoFocus /><button type="submit" disabled={teamCode !== '1407'} data-unlock>{ar ? 'افتح البوابة' : 'Unlock gate'}</button></div></form>}<small className={styles.panelNote}>{ar ? 'محاكاة داخل اللعبة. ما بنطلب أذونات جهازك.' : 'An in-game simulation. We do not request device permissions.'}</small></section></div>}
-    {s?.mode === 'paused' && <div className={styles.overlay}><section className={styles.panel}><p className={styles.chapter}>FED3 / {ar ? 'استراحة' : 'PAUSED'}</p><h2>{ar ? 'المدينة بتستناك.' : 'The city can wait.'}</h2><p>{ar ? 'W A S D أو الأسهم للحركة. اسحب للنظر، أو اضغط على المشهد لتثبيت الماوس. Space للقفز، Shift للركض، F للنبضة، E للتفاعل، N للموقع، وC للانخفاض.' : 'WASD or arrows to move. Drag to look, or click the scene to lock the mouse. Space to jump, Shift to sprint, F for EMP, E to interact, N for location and C to crouch.'}</p>{options}<button className={styles.primary} onClick={() => engine.current?.resume()} data-resume>{ar ? 'كمّل المهمة' : 'Resume mission'}<span>→</span></button><p className={styles.panelNote}>{s.save ? ar ? 'قراراتك محفوظة عند آخر محطة على هذا الجهاز.' : 'Decisions saved at the last checkpoint on this device.' : ar ? 'التخزين غير متاح. بتقدر تكمّل ضمن هاي الجلسة.' : 'Storage unavailable. You can continue this session.'}</p></section></div>}
+    {s?.mode === 'paused' && <div className={styles.overlay}><section className={styles.panel}><p className={styles.chapter}>FED3 / {ar ? 'استراحة' : 'PAUSED'}</p><h2>{ar ? 'المدينة بتستناك.' : 'The city can wait.'}</h2><p>{ar ? 'W A S D أو الأسهم للحركة. اسحب للنظر، أو اضغط على المشهد لتثبيت الماوس. Space للقفز، Shift للركض، F للنبضة، Enter لفتح المحطة، N للموقع، وC للانخفاض.' : 'WASD or arrows to move. Drag to look, or click the scene to lock the mouse. Space to jump, Shift to sprint, F for EMP, Enter to open a station, N for location and C to crouch.'}</p>{options}<button className={styles.primary} onClick={() => engine.current?.resume()} data-resume>{ar ? 'كمّل المهمة' : 'Resume mission'}<span>→</span></button><p className={styles.panelNote}>{s.save ? ar ? 'قراراتك محفوظة عند آخر محطة على هذا الجهاز.' : 'Decisions saved at the last checkpoint on this device.' : ar ? 'التخزين غير متاح. بتقدر تكمّل ضمن هاي الجلسة.' : 'Storage unavailable. You can continue this session.'}</p></section></div>}
     {s?.mode === 'caught' && <div className={styles.overlay}><section className={styles.panel}><p className={styles.chapter}>SIGNAL LOST / 07</p><h2>{ar ? 'وصلوا إلك.' : 'They found you.'}</h2><p>{ar ? 'جرّب تقطع بثّ الموقع، تختبئ وراء مبنى، أو تعطّل الدرون قبل الاقتراب. بنرجعك لآخر محطة مع قراراتك.' : 'Stop location sharing, hide behind a building, or disable a drone before approaching. Return to your last checkpoint with your decisions.'}</p><button className={styles.primary} onClick={() => engine.current?.retry()}>{ar ? 'ارجع لآخر محطة' : 'Retry checkpoint'}<span>↗</span></button></section></div>}
     {s?.mode === 'won' && <div className={styles.overlay}><section className={`${styles.panel} ${styles.result}`}><p className={styles.chapter}>{ar ? 'نهاية المهمة / أثر قراراتك' : 'MISSION COMPLETE / YOUR FOOTPRINT'}</p><h2>{ar ? s.choices.cloud ? 'إنت وصلت. الملفات لسه عندهم.' : 'وصلت. والملفات بإيدك.' : s.choices.cloud ? 'You arrived. The files did not.' : 'You made it. Files in hand.'}</h2><p>{ar ? s.choices.cloud ? 'في هاي المحاكاة، توقّف حساب نكسا قبل التسليم. ترك النسخة المحلية خلّى الفريق يعتمد على فتح الحساب. بتقدر ترجع لمحطة الملفات وتجرّب تحتفظ بنسخة مستقلة.' : 'سلّمت نسخة مستقلة للفريق. تغيير أداة أو إذن بوقف مشاركة جديدة، لكنه ما بمحي المعلومات اللي وصلت قبل.' : s.choices.cloud ? 'In this simulation, NEXA suspended your account before delivery. Without a local copy, the team depends on account access. Return to the transfer station to try an independent copy.' : 'You delivered an independent copy. Changing an app or permission stops new sharing, but does not erase information already disclosed.'}</p><div className={styles.resultStats}><div><b dir="ltr">{time(s.seconds)}</b><span>{ar ? 'وقت المهمة' : 'MISSION TIME'}</span></div><div><b>{s.pulses}</b><span>{ar ? 'نبضات تعطيل' : 'EMP PULSES'}</span></div><div><b>{s.choices.contacts ? ar ? 'انكشفت' : 'SHARED' : ar ? 'محلية' : 'LOCAL'}</b><span>{ar ? 'جهات اتصال الفريق' : 'TEAM CONTACTS'}</span></div></div><div className={styles.endLinks}><a href={`/${locale}/apps/brave/`} target="_blank" rel="noreferrer">{ar ? 'تعرّف على تقليل التتبّع' : 'Explore tracker blocking'} ↗</a><a href={`/${locale}/apps/nextcloud/`} target="_blank" rel="noreferrer">{ar ? 'افهم حفظ الملفات ومشاركتها' : 'Understand file control'} ↗</a></div>{s.choices.cloud && <button className={styles.primary} onClick={() => engine.current?.recoverFiles()}>{ar ? 'ارجع وخذ نسخة محلية' : 'Return for a local copy'}<span>↗</span></button>}<div className={styles.startRow}><button className={styles.secondary} onClick={() => engine.current?.start()}>{ar ? 'جرّب قرارات ثانية' : 'Try other decisions'}</button><button className={styles.secondary} onClick={onClose}>{ar ? 'ارجع للبدائل' : 'Back to alternatives'}</button></div></section></div>}
     {error && <div className={styles.overlay}><section className={styles.panel} role="alert"><p className={styles.chapter}>FED3 / WEBGL</p><h2>{ar ? 'تعذّر تشغيل المدينة' : 'The city could not start'}</h2><p>{error}</p><button className={styles.primary} onClick={onClose}>{ar ? 'ارجع للبدائل' : 'Back to alternatives'}<span>↗</span></button></section></div>}

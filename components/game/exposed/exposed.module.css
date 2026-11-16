@@ -5,23 +5,14 @@
 .codeForm{margin-top:17px;padding:13px;background:#0a2039;border:1px solid #bbcdd533;border-radius:4px}.codeForm label{display:block;font-size:11px;color:#e8c69f;margin-bottom:10px}.codeForm>div{display:flex;gap:10px}.codeForm input{width:120px;min-height:40px;font:20px monospace;letter-spacing:.3em;direction:ltr;text-align:center;background:#17374e;color:#fff1da;border:1px solid #b4c8d477;border-radius:4px}.codeForm button{flex:1;background:#e7904c;color:#10233c;border:0;border-radius:4px;font-size:12px}.codeForm button:disabled{opacity:.4}
 .briefingOverlay{position:absolute;inset:0;background:#051220df;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:grid;place-items:center;padding:clamp(20px,4vh,44px) 20px;z-index:9;overflow-y:auto;touch-action:pan-y}
 .briefingCard{width:min(620px,100%);background:linear-gradient(145deg,#0e273f,#081d31);border:1px solid #f28a3b59;border-inline-start:4px solid #f28a3b;box-shadow:0 25px 80px #030c16e6,0 0 35px #f28a3b1f;border-radius:8px;padding:clamp(20px,4vw,34px);display:flex;flex-direction:column;gap:16px}
-.briefingHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #bbcdd52e}
-.briefingBadge{display:flex;align-items:center;gap:8px;font-family:monospace;font-size:11px;letter-spacing:.12em;color:#f7a265;font-weight:600}
-.briefingDot{width:8px;height:8px;border-radius:50%;background:#f28a3b;box-shadow:0 0 10px #f28a3b;animation:briefingPulse 1.4s infinite ease-in-out}
-@keyframes briefingPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.85)}}
-.briefingStatus{font-family:monospace;font-size:9px;letter-spacing:.1em;color:#9ab4c4}
-.briefingTitle{font-size:clamp(19px,2.6vw,26px);font-weight:600;line-height:1.4;margin:0;color:#fff1da}
-.briefingBody{background:#081829bf;border:1px solid #bbcdd526;border-radius:6px;padding:16px 20px;min-height:150px;cursor:pointer;position:relative;transition:border-color .2s}
-.briefingBody:hover{border-color:#f28a3b59}
-.briefingText{white-space:pre-wrap;font-size:13.5px;line-height:2.05;color:#dce7ed;margin:0}
-.cursor{display:inline-block;width:7px;height:15px;background:#f28a3b;vertical-align:middle;margin-inline-start:4px;animation:cursorBlink .7s infinite}
-@keyframes cursorBlink{0%,50%{opacity:1}51%,100%{opacity:0}}
-.briefingControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;background:#0a20398c;border:1px solid #bbcdd524;border-radius:6px;padding:12px 16px;font-size:11px}
-.controlGroup{display:flex;flex-direction:column;gap:5px;color:#c0d1dc}
-.controlGroup b{color:#f7a870;font-size:11px;margin-bottom:2px}
-.controlGroup span{display:flex;align-items:center;gap:6px;font-size:10.5px}
-.controlGroup kbd{font-family:monospace;font-size:9px;padding:2px 5px;border:1px solid #c2d1d459;border-radius:3px;background:#0d263c;color:#fff}
-.briefingActions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
-@media(max-width:760px){.briefingCard{padding:18px 16px;gap:13px}.briefingTitle{font-size:18px}.briefingText{font-size:12px;line-height:1.85}.briefingControls{grid-template-columns:1fr;font-size:10px;padding:10px 12px}.briefingActions{flex-direction:column;align-items:stretch}.briefingActions .primary{width:100%;justify-content:center}}
-@media(max-height:560px) and (min-width:480px){.briefingOverlay{padding:40px 15px 15px}.briefingCard{padding:16px 20px;gap:10px}.briefingBody{padding:10px 14px;min-height:90px}.briefingText{font-size:11px;line-height:1.7}.briefingControls{padding:8px 12px;gap:8px}}
+.briefingBody{background:#081829bf;border:1px solid #bbcdd526;border-radius:6px;padding:18px 20px;display:grid;gap:20px}
+.briefingText{font-size:14px;line-height:2.05;color:#ecf1f2;margin:0}
+.briefingText strong{font-weight:700}
+.briefingText mark{background:#f28a3b26;color:#ffd09c;padding:2px 4px;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.game .briefingStart{align-self:flex-start;min-height:44px;padding:10px 20px;border:1px solid #f6a66a;border-radius:4px;background:#f28a3b;color:#10243a;font-size:14px;font-weight:600}
+.briefingStart:hover{background:#ffac6b}
+.game[data-mode=playing] button{touch-action:none;user-select:none;-webkit-user-select:none}
+.game[data-touch=true] .radio{display:none}
+@media(max-width:760px){.briefingCard{padding:18px 16px;gap:16px}.briefingBody{padding:14px;gap:16px}.briefingText{font-size:13px;line-height:1.9}}
+@media(max-height:560px) and (min-width:480px){.briefingOverlay{padding:65px 15px 15px;place-items:start center}.briefingCard{padding:16px 20px;gap:12px}.briefingBody{padding:12px 14px;gap:12px}.briefingText{font-size:12px;line-height:1.8}}
 @media(max-width:359px){.mission{width:175px;padding:10px 12px}.mission h2{font-size:15px}.missionMeta span{font-size:7px}.map{width:80px}.map canvas{height:112px}.map small{font-size:4px}.game[data-touch=true] .tracking{width:43px;min-height:43px;justify-content:center;padding:8px}.game[data-touch=true] .tracking span{display:none}}@media(max-height:360px) and (min-width:480px){.mission{top:60px;width:160px;padding:8px 12px}.missionMeta span{display:none}.map{display:none}.mission h2{font-size:14px}.game[data-touch=true] .radio{bottom:20px;width:35%;font-size:9px}.status{font-size:7px;max-width:35%}.status small{font-size:7px}}

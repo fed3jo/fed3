@@ -54,12 +54,12 @@ export class ExposedEngine {
     this.listen(window, 'keydown', ((e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
       if (this.state.mode !== 'playing' && e.code !== 'KeyP') return;
-      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+      if (['Space', 'Enter', 'NumpadEnter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
       if (e.repeat) return;
       if (e.code === 'KeyP') { if (this.state.mode === 'playing') this.pause(); else if (this.state.mode === 'paused') this.resume(); }
       if (e.code === 'KeyF') this.shoot();
-      if (e.code === 'KeyE') this.interact();
+      if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'KeyE') this.interact();
       if (e.code === 'KeyN') this.toggleNavigation();
       if (e.code === 'Space') this.controls.jump = true;
     }) as EventListener);
@@ -69,6 +69,8 @@ export class ExposedEngine {
     this.listen(canvas, 'contextmenu', e => e.preventDefault());
     this.listen(canvas, 'pointerdown', ((e: PointerEvent) => {
       if (this.state.mode !== 'playing') return;
+      if (this.pointer && this.pointer.id !== e.pointerId) return;
+      e.preventDefault();
       if (document.pointerLockElement === canvas) { this.shoot(); return; }
       this.pointer = { id: e.pointerId, x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId);
       if (e.pointerType === 'mouse' && !this.mobile && canvas.requestPointerLock) {

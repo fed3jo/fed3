@@ -18,6 +18,9 @@ async function launch(page: Page, locale = 'ar') {
 async function start(page: Page) {
   await page.locator('[data-start]').click();
   await expect(page.locator('[data-briefing]')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('[data-briefing] h2, [data-briefing] kbd')).toHaveCount(0);
+  await expect(page.locator('[data-briefing] strong')).toHaveCount(4);
+  await expect(page.locator('[data-briefing] mark')).toHaveCount(4);
   await page.locator('[data-briefing-start]').click();
   await expect(game(page)).toHaveAttribute('data-mode', 'playing');
 }
@@ -119,7 +122,8 @@ test('navigation kiosk applies a location sharing decision through the actual UI
   await page.keyboard.down('KeyW');
   await expect(page.locator('[data-interact]')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.up('KeyW');
-  await page.locator('[data-interact]').click();
+  await expect(page.locator('[data-interact] kbd')).toHaveText('Enter');
+  await page.keyboard.press('Enter');
   await expect(game(page)).toHaveAttribute('data-mode', 'decision');
   await expect(page.getByRole('heading', { name: 'أقصر طريق. مين بعرفه معك؟' })).toBeVisible();
   await page.screenshot({ path: 'test-results/exposed-navigation-decision.png' });
@@ -132,14 +136,16 @@ test('navigation kiosk applies a location sharing decision through the actual UI
   expect(errors).toEqual([]);
 });
 
-test('portrait and landscape touch controls allow simultaneous movement and looking', async ({ browser }) => {
+test('portrait and landscape support movement, looking and action buttons together', async ({ browser }) => {
   const context: BrowserContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await context.newPage();
   const errors = pageErrors(page);
   try {
+    await seed(page, { version: 1, stage: 1, choices: { navigation: false, contacts: false, cloud: false }, seconds: 0, pulses: 0 });
     await launch(page);
     await start(page);
     await expect(game(page)).toHaveAttribute('data-touch', 'true');
+    await expect(game(page).getByRole('status')).toHaveCount(0);
     const session = await context.newCDPSession(page);
     for (const size of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
       await page.setViewportSize(size);
@@ -158,9 +164,31 @@ test('portrait and landscape touch controls allow simultaneous movement and look
       await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x, y: y - 39 }, { id: 2, x: lookX + 45, y: lookY - 15 }] });
       await expect.poll(async () => (await position(page)).z, { timeout: 12_000 }).toBeLessThan(before.z - .45);
       await expect.poll(async () => Math.abs((await position(page)).x - before.x), { timeout: 8_000 }).toBeGreaterThan(.025);
+      const touchPoints = [{ id: 1, x, y: y - 39 }, { id: 2, x: lookX + 45, y: lookY - 15 }];
+      const buttons = [page.getByRole('button', { name: 'ركض', exact: true }), page.getByRole('button', { name: 'قفز', exact: true }), page.locator('[data-pulse]'), page.getByRole('button', { name: 'انخفاض', exact: true }), page.locator('[data-navigation]')];
+      for (const [index, button] of buttons.entries()) {
+        const rect = (await button.boundingBox())!;
+        touchPoints.push({ id: index + 3, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
+        await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints });
+      }
+      await expect(buttons[0]).toHaveAttribute('aria-pressed', 'true');
+      await expect(buttons[2]).toBeDisabled();
+      await expect(buttons[3]).toHaveAttribute('aria-pressed', 'true');
+      await expect(buttons[4]).toHaveAttribute('aria-pressed', 'true');
+      const moving = await position(page);
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: touchPoints.map(point => point.id === 2 ? { ...point, x: point.x + 30 } : point) });
+      await expect.poll(async () => Math.hypot((await position(page)).x - moving.x, (await position(page)).z - moving.z)).toBeGreaterThan(.2);
       await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      await page.locator('[data-pulse]').tap();
-      await expect(page.locator('[data-pulse]')).toBeDisabled();
+      // Releasing a finger must not generate a second toggle through a click.
+      await expect(buttons[0]).toHaveAttribute('aria-pressed', 'true');
+      await expect(buttons[3]).toHaveAttribute('aria-pressed', 'true');
+      await expect(buttons[4]).toHaveAttribute('aria-pressed', 'true');
+      await buttons[0].tap();
+      await buttons[3].tap();
+      await buttons[4].tap();
+      await expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
+      await expect(buttons[3]).toHaveAttribute('aria-pressed', 'false');
+      await expect(buttons[4]).toHaveAttribute('aria-pressed', 'false');
       await page.screenshot({ path: `test-results/exposed-touch-${size.width > size.height ? 'landscape' : 'portrait'}.png` });
       await page.locator('[data-pause]').tap();
       await expect(game(page)).toHaveAttribute('data-mode', 'paused');
