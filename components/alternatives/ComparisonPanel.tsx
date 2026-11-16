@@ -1,10 +1,9 @@
 'use client';
+import { useCatalog } from './CatalogContext';
 
 import { useRef, useState } from 'react';
 import type { Locale } from '@/lib/fed3/config';
 import { criteria, reviewDate, type Alternative, type Criterion } from '@/lib/fed3/alternatives';
-import { comparisonBriefs } from '@/lib/fed3/comparison-briefs';
-import { appStart } from '@/lib/fed3/app-start';
 import { comparisonGroups, type ComparisonGroupId } from '@/lib/fed3/comparison-layout';
 import { criterionQuestions } from '@/lib/fed3/narrative';
 import { FeatureIcon } from '@/components/shared/FeatureIcon';
@@ -29,6 +28,7 @@ export function ComparisonPanel({ locale, app, openGroup, activeCriterion, onGro
   onSelect: (id: string) => void; onShare: () => void; shareStatus: string;
   reduceMotion?: boolean;
 }) {
+  const { appStart, comparisonBriefs } = useCatalog();
   const ar = locale === 'ar';
   const start = appStart[app.id];
   const readingArea = useRef<HTMLDivElement>(null);
@@ -104,7 +104,7 @@ export function ComparisonPanel({ locale, app, openGroup, activeCriterion, onGro
         <p>{ar ? 'التشفير يحمي المحتوى ضمن نطاق محدد، ولا يمنع كل جمع للبيانات الوصفية.' : 'Encryption protects content within a defined scope. It does not prevent all metadata collection.'}</p>
         <p>{ar ? 'الاستضافة الذاتية تمنحك اختيار المشغّل، وتنقل إليك مسؤولية الصيانة والنسخ والاستعادة.' : 'Self-hosting lets you choose the operator and makes you responsible for maintenance, backups and recovery.'}</p>
         <p>{ar ? 'لا توجد درجة أمان واحدة تناسب الجميع. اختبر ما تحتاجه قبل نقل بياناتك المهمة.' : 'There is no single security score for everyone. Test your needs before moving important data.'}</p>
-        <p className={styles.reviewed}>{ar ? 'مراجعة المصادر' : 'Sources reviewed'}: <time dateTime="2026-10-24">{reviewDate[locale]}</time></p>
+        <p className={styles.reviewed}>{ar ? 'مراجعة المصادر' : 'Sources reviewed'}: <time dateTime={app.reviewedOn ?? '2026-10-24'}>{app.reviewedOn ?? reviewDate[locale]}</time></p>
       </div>
     </details>
   </div>;

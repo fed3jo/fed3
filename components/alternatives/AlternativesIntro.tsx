@@ -12,11 +12,11 @@ export function AlternativesIntro({ locale, explore, reduceMotion }: { locale: L
         ? <><span className={identity.navy}>البدائل</span>{' '}<span className={identity.orange}>الرقمية</span></>
         : <><span className={identity.navy}>Digital</span>{' '}<span className={identity.orange}>alternatives</span></>}</h1>
       <p className={identity.description}>{ar ? <>
-        تجمع هذه الصفحة خمسة بدائل للتطبيقات التي تستخدمها في المراسلة والتصفح والبريد والعمل على الملفات.
+        تجمع هذه الصفحة بدائل للتطبيقات التي تستخدمها في المراسلة والتصفح والبريد والعمل على الملفات.
         {' '}<mark className={identity.focusPhrase}>قارن البديل بتطبيقك الحالي</mark> لتفهم مزاياه وحدوده وطريقة تعامله مع بياناتك، ثم{' '}
         <mark className={identity.focusPhrase}>جرّب ما يناسب احتياجك.</mark><span className={identity.caret} aria-hidden="true" />
       </> : <>
-        Explore five alternatives for messaging, browsing, email and working with files.
+        Explore alternatives for messaging, browsing, email and working with files.
         {' '}<mark className={identity.focusPhrase}>Compare each alternative with your current app</mark> to understand its features, limits and how it handles your data. Then{' '}
         <mark className={identity.focusPhrase}>try what suits your needs.</mark><span className={identity.caret} aria-hidden="true" />
       </>}</p>

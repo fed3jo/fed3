@@ -1,18 +1,18 @@
 'use client';
+import { useCatalog } from './CatalogContext';
 
 import { useState } from 'react';
 import type { Alternative, ComparisonRow, Criterion } from '@/lib/fed3/alternatives';
 import { criteria, privacyCriteria } from '@/lib/fed3/alternatives';
 import { criterionQuestions } from '@/lib/fed3/narrative';
 import type { Locale } from '@/lib/fed3/config';
-import { comparisonBriefs } from '@/lib/fed3/comparison-briefs';
-import { appStart } from '@/lib/fed3/app-start';
 import { PlainText } from './PlainText';
 import { AppLogo } from './AppLogo';
 import { StoryIcon } from '@/components/shared/SovereigntyStory';
 import styles from './alternatives.module.css';
 
 export function ComparisonExplorer({ app, rows, locale }: { app: Alternative; rows: ComparisonRow[]; locale: Locale }) {
+  const { appStart, comparisonBriefs } = useCatalog();
   const [selected, setSelected] = useState<Criterion>(appStart[app.id].firstCriterion);
   const row = rows.find(item => item.key === selected) || rows[0];
   const index = rows.indexOf(row);

@@ -1,12 +1,13 @@
 'use client';
+import { useCatalog } from './CatalogContext';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { alternatives } from '@/lib/fed3/alternatives';
 import type { Locale } from '@/lib/fed3/config';
 import { AppLogo } from './AppLogo';
 import styles from './comparison-picker.module.css';
 
 export function ComparisonAppPicker({ locale, selectedId, onSelect }: { locale: Locale; selectedId: string; onSelect: (id: string) => void }) {
+  const { alternatives } = useCatalog();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);

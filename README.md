@@ -1,5 +1,7 @@
 # Fed3
 
+The Arabic content dashboard is at `/ar/admin/`. It uses Supabase Auth, PostgreSQL and Storage, with separate editor/manager roles and draft/published content. Without Supabase configuration, the public site keeps its bundled catalog and the dashboard displays setup instructions. See [setup, publishing and backups](docs/admin-dashboard.md) and the server-only variables in `.env.example`. The existing five apps can be imported from the dashboard; published additions reuse the current directory, comparison and app-detail templates.
+
 Arabic and English landing page for the Digital Sovereignty Initiative. The home page uses native scrolling, an interactive WebGL mountain of navy and orange spheres with a matching static fallback, and three station video slots. All three stations include bundled, responsive videos. The home page does not load the 240-frame sequence or GSAP. Wheel scrolling uses the bundled Lenis script, loaded after the page is idle; touch scrolling remains native, and reduced-motion preferences disable smoothing.
 
 ## Station videos

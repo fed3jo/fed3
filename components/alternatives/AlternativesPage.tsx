@@ -1,9 +1,9 @@
 'use client';
+import { useCatalog } from './CatalogContext';
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { alternatives, type Criterion } from '@/lib/fed3/alternatives';
-import { appStart } from '@/lib/fed3/app-start';
+import { type Criterion } from '@/lib/fed3/alternatives';
 import { comparisonGroups, type ComparisonGroupId } from '@/lib/fed3/comparison-layout';
 import { fed3, type Locale } from '@/lib/fed3/config';
 import styles from './alternatives.module.css';
@@ -32,9 +32,10 @@ const copy = {
 };
 
 export function AlternativesPage({ locale }: { locale: Locale }) {
+  const { alternatives, appStart } = useCatalog();
   const c = copy[locale];
   const other = locale === 'ar' ? 'en' : 'ar';
-  const [selectedId, setSelectedId] = useState('signal');
+  const [selectedId, setSelectedId] = useState(alternatives[0]?.id ?? '');
   const [openGroup, setOpenGroup] = useState<ComparisonGroupId>('privacy');
   const [activeCriterion, setActiveCriterion] = useState<Criterion>('collection');
   const [reduced, setReduced] = useState(false);

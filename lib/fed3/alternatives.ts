@@ -6,7 +6,7 @@ export const categories = {
   messaging: t('المراسلة', 'Messaging'), browser: t('التصفح', 'Browsing'),
   email: t('البريد', 'Email'), storage: t('التخزين', 'Storage'), documents: t('المستندات', 'Documents'),
 };
-export type Category = keyof typeof categories;
+export type Category = string;
 export const criteria = {
   encryption: t('التشفير ومن يقرأ المحتوى', 'Encryption & content access'),
   collection: t('البيانات التي تعالجها الخدمة', 'Data the service processes'),
@@ -27,6 +27,13 @@ export type Alternative = {
   id: string; name: string; current: string; category: Category; mark: string; color: string;
   description: Copy; gain: Copy; tradeoff: Copy; firstStep: Copy; steps: Copy[];
   official: string; download: string; sources: Source[]; rows: ComparisonRow[];
+  categoryLabel?: Copy; logo?: string; currentLogo?: string; reviewedOn?: string;
+  introduction?: { source: string; description: Copy; features: Copy[] };
+  start?: { firstCriterion: Criterion; intro: Copy; benefit: Copy; remember: Copy; downloadLabel: Copy; note: Copy; steps: Copy[] };
+  briefs?: Record<Criterion, { current: Copy; alternative: Copy }>;
+  downloads?: { platform: string; url: string }[];
+  media?: { id: string; url: string; mime: string; alt: Copy; license: string; sourceUrl: string }[];
+  sortOrder?: number;
 };
 const source = (ar: string, en: string, url: string): Source => ({ name: t(ar, en), url });
 const row = (key: Criterion, arCurrent: string, enCurrent: string, arAlternative: string, enAlternative: string, sources: number[]): ComparisonRow => ({ key, current: t(arCurrent, enCurrent), alternative: t(arAlternative, enAlternative), sources });

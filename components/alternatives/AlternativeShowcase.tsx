@@ -1,11 +1,10 @@
 'use client';
+import { useCatalog } from './CatalogContext';
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { Locale } from '@/lib/fed3/config';
-import { categories, type Alternative } from '@/lib/fed3/alternatives';
-import { appIntroductions } from '@/lib/fed3/app-introductions';
-import { appStart } from '@/lib/fed3/app-start';
+import { type Alternative } from '@/lib/fed3/alternatives';
 import { PlainText } from './PlainText';
 import { AppLogo } from './AppLogo';
 import { DirectionalArrow, DownloadIcon } from './DirectionalArrow';
@@ -14,6 +13,7 @@ import styles from './showcase.module.css';
 export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCompare }: {
   locale: Locale; items: Alternative[]; selectedId: string; onSelect: (id: string) => void; onCompare: (id: string) => void;
 }) {
+  const { appIntroductions, appStart, categories } = useCatalog();
   const ar = locale === 'ar';
   const root = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
