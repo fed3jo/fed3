@@ -1,9 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { checkpoints, START, inside, observe, readRun, segmentBlocked, streetRoute, type Bounds, type DroneKnowledge, type SavedRun } from '../lib/fed3/exposed';
+import { checkpoints, START, inside, nearbyStation, observe, readRun, segmentBlocked, streetRoute, type Bounds, type DroneKnowledge, type SavedRun } from '../lib/fed3/exposed';
 
 const wall: Bounds = { x: 0, z: 0, w: 4, d: 2, height: 3 };
 const emptyKnowledge = (): DroneKnowledge => ({ last: null, age: 0, source: null });
 const validRun = (): SavedRun => ({ version: 1, stage: 3, choices: { navigation: true, contacts: true, cloud: true }, seconds: 123.5, pulses: 4 });
+
+test('files can be collected again after transfer without unlocking future stations', () => {
+  expect(nearbyStation(3, { x: -12, z: -81 })).toBe(2);
+  expect(nearbyStation(3, { x: 0, z: -125 })).toBe(3);
+  expect(nearbyStation(1, checkpoints[2])).toBeNull();
+  expect(nearbyStation(3, checkpoints[1])).toBeNull();
+  expect(nearbyStation(3, { x: -12, z: -79.5 })).toBeNull();
+  expect(nearbyStation(2, checkpoints[2])).toBe(2);
+});
 
 test('location disclosure records a copy and stopping disclosure preserves only the last known point', () => {
   const player = { x: 2, z: -15 };

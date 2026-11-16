@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { SAVE_KEY } from '../lib/fed3/exposed';
 test.use({ viewport: { width: 960, height: 600 }, deviceScaleFactor: 1 });
 
 async function walk(page: Page, axis: 'x' | 'z', target: number, sprint = false) {
@@ -34,7 +35,7 @@ test('complete the city route with independent files', async ({ page }) => {
   await page.screenshot({ path: 'test-results/exposed-workshop.jpg', type: 'jpeg', quality: 85 });
   await walk(page, 'z', -2.1);
   await page.locator('[data-interact]').click();
-  await expect(page.locator('#decision-title')).toContainText('أقصر طريق');
+  await expect(page.locator('#decision-title')).toHaveText('الملاحة');
   await page.locator('[data-choice="private"]').click();
   await expect(page.locator('[data-exposed-game]')).toHaveAttribute('data-stage', '1');
   await walk(page, 'x', 1.8);
@@ -58,4 +59,48 @@ test('complete the city route with independent files', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'وصلت. والملفات بإيدك.' })).toBeVisible();
   expect(errors).toEqual([]);
   await page.screenshot({ path: 'test-results/exposed-route-complete.png' });
+});
+
+test('revisit files after choosing cloud, resume, and recover from an unavailable account', async ({ page }) => {
+  test.setTimeout(180000);
+  const root = page.locator('[data-exposed-game]');
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(key => localStorage.setItem(key, JSON.stringify({ version: 1, stage: 3, choices: { navigation: false, contacts: false, cloud: true }, seconds: 30, pulses: 0 })), SAVE_KEY);
+  await page.goto('/ar/alternatives/#game');
+  await page.locator('[data-game-launch]').click();
+  await page.locator('[data-start]').click();
+  await page.locator('[data-briefing-start]').click();
+  await walk(page, 'z', -81);
+  await page.keyboard.press('Enter');
+  await expect(root).toHaveAttribute('data-mode', 'decision');
+  await expect(root).toHaveAttribute('data-stage', '3');
+  await expect(page.locator('#decision-title')).toHaveText('نسخة الملفات');
+  await page.locator('[data-choice=private]').click();
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).choices.cloud, SAVE_KEY)).toBe(false);
+  await expect(root).toHaveAttribute('data-stage', '3');
+  await page.locator('[data-game-close]').click();
+  await page.locator('[data-game-launch]').click();
+  await page.locator('[data-start]').click();
+  await page.locator('[data-briefing-start]').click();
+  await walk(page, 'z', -81);
+  await page.keyboard.press('Enter');
+  await page.locator('[data-choice=share]').click();
+  await walk(page, 'x', -10);
+  await walk(page, 'z', -83);
+  await walk(page, 'x', 0);
+  await walk(page, 'z', -125.5, true);
+  await page.keyboard.press('Enter');
+  await expect(root).toHaveAttribute('data-mode', 'won');
+  await page.getByRole('button', { name: 'ارجع وخذ نسخة محلية' }).click();
+  await expect(root).toHaveAttribute('data-mode', 'decision');
+  await expect(page.locator('#decision-title')).toHaveText('نسخة الملفات');
+  await page.locator('[data-choice=private]').click();
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).choices.cloud, SAVE_KEY)).toBe(false);
+  await walk(page, 'x', -10);
+  await walk(page, 'z', -83);
+  await walk(page, 'x', 0);
+  await walk(page, 'z', -125.5, true);
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'وصلت. والملفات بإيدك.' })).toBeVisible();
+  expect(errors).toEqual([]);
 });

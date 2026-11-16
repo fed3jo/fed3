@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { buildCity, type City } from './city';
-import { checkpoints, START, SAVE_KEY, inside, segmentBlocked, observe, streetRoute, type Choices, type DroneKnowledge, type SavedRun, type Point } from '@/lib/fed3/exposed';
+import { GameAudio } from './audio';
+import { checkpoints, START, SAVE_KEY, nearbyStation, inside, segmentBlocked, observe, streetRoute, type Choices, type DroneKnowledge, type SavedRun, type Point } from '@/lib/fed3/exposed';
 
 export type Mode = 'intro' | 'playing' | 'paused' | 'decision' | 'caught' | 'won';
-export type Snapshot = { mode: Mode; stage: number; health: number; stamina: number; cooldown: number; seconds: number; choices: Choices; distance: number; near: boolean; alert: 'clear' | 'search' | 'visual' | 'location'; message: string; x: number; z: number; pulses: number; ready: boolean; fps: number; quality: string; save: boolean };
+export type Snapshot = { mode: Mode; stage: number; health: number; stamina: number; cooldown: number; seconds: number; choices: Choices; distance: number; near: boolean; station: number | null; sensitivity: number; alert: 'clear' | 'search' | 'visual' | 'location'; message: string; x: number; z: number; pulses: number; ready: boolean; fps: number; quality: string; save: boolean };
 export type Controls = { x: number; y: number; sprint: boolean; jump: boolean; crouch: boolean };
 type Drone = { mesh: THREE.Group; home: THREE.Vector3; knowledge: DroneKnowledge; stunned: number; fire: number; lock: number };
 export class ExposedEngine {
@@ -12,7 +13,7 @@ export class ExposedEngine {
   renderer: THREE.WebGLRenderer;
   city: City;
   controls: Controls = { x: 0, y: 0, sprint: false, jump: false, crouch: false };
-  state: Snapshot = { mode: 'intro', stage: 0, health: 100, stamina: 100, cooldown: 0, seconds: 0, choices: { navigation: false, contacts: false, cloud: false }, distance: 0, near: false, alert: 'clear', message: '', x: START.x, z: START.z, pulses: 0, ready: false, fps: 60, quality: 'auto', save: true };
+  state: Snapshot = { mode: 'intro', stage: 0, health: 100, stamina: 100, cooldown: 0, seconds: 0, choices: { navigation: false, contacts: false, cloud: false }, distance: 0, near: false, station: null, sensitivity: .7, alert: 'clear', message: '', x: START.x, z: START.z, pulses: 0, ready: false, fps: 60, quality: 'auto', save: true };
   position = new THREE.Vector3(START.x, 0, START.z);
   yaw = 0; pitch = 0;
   private mobile: boolean;
@@ -21,7 +22,7 @@ export class ExposedEngine {
   private frame = 0; private last = 0; private hudTime = 0; private ping = 0; private messageTime = 0;
   private jumpVelocity = 0; private pulseLife = 0; private bob = 0; private fpsTime = 0; private fpsFrames = 0;
   private grounded = true;
-  private sound: AudioContext | null = null; private muted = true; private calm = false;
+  private audio = new GameAudio(); private calm = false;
   private disposed = false; private low = false; private resizeObserver: ResizeObserver;
   private pointer: { id: number; x: number; y: number } | null = null;
   private wasLocked = false; private removers: (() => void)[] = [];
@@ -52,7 +53,7 @@ export class ExposedEngine {
   private bind() {
     const canvas = this.renderer.domElement;
     this.listen(window, 'keydown', ((e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
       if (this.state.mode !== 'playing' && e.code !== 'KeyP') return;
       if (['Space', 'Enter', 'NumpadEnter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
@@ -80,14 +81,23 @@ export class ExposedEngine {
     this.listen(canvas, 'pointermove', ((e: PointerEvent) => {
       if (this.state.mode !== 'playing') return;
       if (document.pointerLockElement === canvas) this.look(e.movementX, e.movementY);
-      else if (this.pointer?.id === e.pointerId) { this.look(e.clientX - this.pointer.x, e.clientY - this.pointer.y); this.pointer.x = e.clientX; this.pointer.y = e.clientY; }
+      else if (this.pointer?.id === e.pointerId) { this.look(e.clientX - this.pointer.x, e.clientY - this.pointer.y, e.pointerType === 'touch'); this.pointer.x = e.clientX; this.pointer.y = e.clientY; }
     }) as EventListener);
     const end = ((e: PointerEvent) => { if (this.pointer?.id === e.pointerId) this.pointer = null; }) as EventListener;
     this.listen(canvas, 'pointerup', end); this.listen(canvas, 'pointercancel', end); this.listen(canvas, 'lostpointercapture', end);
     this.listen(document, 'pointerlockchange', (() => { const locked = document.pointerLockElement === canvas; if (this.wasLocked && !locked && this.state.mode === 'playing') this.pause(); this.wasLocked = locked; }) as EventListener);
     this.listen(canvas, 'webglcontextlost', e => { e.preventDefault(); this.pause(); this.fail(this.ar ? 'توقف العرض ثلاثي الأبعاد. أعد فتح اللعبة لاستعادة المرحلة المحفوظة.' : 'The 3D display stopped. Reopen the game to resume your checkpoint.'); });
   }
-  private look(dx: number, dy: number) { this.yaw -= dx * .003; this.pitch = THREE.MathUtils.clamp(this.pitch - dy * .0025, -1.1, 1.1); }
+  private look(dx: number, dy: number, touch = false) {
+    const scale = this.state.sensitivity * (touch ? 1.25 : 1);
+    this.yaw -= dx * .003 * scale; this.pitch = THREE.MathUtils.clamp(this.pitch - dy * .0025 * scale, -1.1, 1.1);
+  }
+  setSensitivity(value: number) { if (Number.isFinite(value)) { this.state.sensitivity = THREE.MathUtils.clamp(value, .3, 1.5); this.emitState(); } }
+  private updateStation() {
+    const cp = checkpoints[this.state.stage];
+    this.state.distance = Math.hypot(cp.x - this.position.x, cp.z - this.position.z);
+    this.state.station = nearbyStation(this.state.stage, this.position); this.state.near = this.state.station !== null;
+  }
   private resize() { const { width, height } = this.host.getBoundingClientRect(); this.renderer.setSize(width, height); this.camera.aspect = width / Math.max(1, height); this.camera.fov = width < height ? 78 : 68; this.camera.updateProjectionMatrix(); }
   private emitState() { this.emit({ ...this.state, choices: { ...this.state.choices } }); }
   private message(ar: string, en: string, seconds = 4) { this.state.message = this.ar ? ar : en; this.messageTime = seconds; }
@@ -97,27 +107,37 @@ export class ExposedEngine {
     this.resetInput(); this.state = { ...this.state, mode: 'playing', stage: saved?.stage ?? 0, health: 100, stamina: 100, cooldown: 0, seconds: saved?.seconds ?? 0, pulses: saved?.pulses ?? 0, choices: saved ? { ...saved.choices } : { navigation: false, contacts: false, cloud: false }, message: '', alert: 'clear' };
     const spawn = saved && saved.stage > 0 ? checkpoints[saved.stage - 1] : START;
     this.position.set(spawn.x, 0, spawn.z + (saved && saved.stage > 0 ? 4 : 0)); this.yaw = 0; this.pitch = 0; this.jumpVelocity = 0; this.grounded = true; this.ping = 0;
-    this.resetDrones(); this.message('وصل الملفات للمقرّ. اتبع اللافتات والضوء البرتقالي.', 'Deliver the files. Follow the street signs and orange beacon.', 6); this.save(); this.emitState();
+    this.updateStation(); this.audio.setActive(true); this.resetDrones(); this.message('وصل الملفات للمقرّ. اتبع اللافتات والضوء البرتقالي.', 'Deliver the files. Follow the street signs and orange beacon.', 6); this.save(); this.emitState();
   }
-  pause() { if (this.state.mode !== 'playing') return; this.state.mode = 'paused'; this.release(); this.save(); this.emitState(); }
-  resume() { if (this.state.mode !== 'paused') return; this.state.mode = 'playing'; this.last = 0; this.resetInput(); this.emitState(); }
+  pause() { if (this.state.mode !== 'playing') return; this.state.mode = 'paused'; this.audio.setActive(false); this.release(); this.save(); this.emitState(); }
+  resume() { if (this.state.mode !== 'paused') return; this.state.mode = 'playing'; this.audio.setActive(true); this.last = 0; this.resetInput(); this.emitState(); }
   choose(accept: boolean) {
-    if (this.state.mode !== 'decision' || this.state.stage > 2) return;
-    const decision = checkpoints[this.state.stage].decision!; this.state.choices[decision] = accept;
-    this.state.stage++; this.state.mode = 'playing'; this.state.health = Math.max(75, this.state.health); this.state.stamina = 100; this.resetInput();
+    const station = this.state.station;
+    if (this.state.mode !== 'decision' || station === null || station > 2) return;
+    const decision = checkpoints[station].decision!; this.state.choices[decision] = accept;
+    this.state.stage = Math.max(this.state.stage, station + 1); this.state.mode = 'playing'; this.state.health = Math.max(75, this.state.health); this.state.stamina = 100; this.resetInput();
     if (decision === 'navigation') this.message(accept ? 'نكسا: مشاركة الموقع نشطة. الدرونات تستقبل موقعك.' : 'الخريطة المحلية جاهزة. اتبع اللوحات والبوصلة.', accept ? 'NEXA: location sharing active. Drones receive your position.' : 'Offline map ready. Follow signs and your compass.', 6);
     if (decision === 'contacts') this.message(accept ? 'انتقلت جهات اتصال الفريق. أُضيفت دورية جديدة.' : 'فتحت البوابة برمز الفريق. جهات الاتصال بقيت معك.', accept ? 'Team contacts shared. An extra patrol has been dispatched.' : 'Gate opened with the team code. Contacts stayed with you.', 6);
     if (decision === 'cloud') this.message(accept ? 'الملفات على حساب نكسا فقط. حملك أخفّ، ووصولك مرتبط بالحساب.' : 'النسخة المحلية معك. رح توصلها بنفسك.', accept ? 'Files are only on your NEXA account. Less weight, but access depends on that account.' : 'Your local copy is secure in the bag. Deliver it yourself.', 6);
-    this.save(); this.emitState();
+    this.updateStation(); this.audio.setActive(true); this.audio.cue('station'); this.save(); this.emitState();
   }
   interact() {
-    if (this.state.mode !== 'playing' || !this.state.near) return;
-    this.state.mode = this.state.stage === 3 ? 'won' : 'decision'; this.release();
-    if (this.state.mode === 'won') { try { localStorage.removeItem(SAVE_KEY); } catch { /* Optional local save. */ } this.tone(740, .25); }
+    if (this.state.mode !== 'playing') return;
+    this.updateStation(); if (this.state.station === null) return;
+    this.state.mode = this.state.station === 3 ? 'won' : 'decision'; this.release(); this.audio.setActive(false);
+    if (this.state.mode === 'won') { try { localStorage.removeItem(SAVE_KEY); } catch { /* Optional local save. */ } this.audio.cue(this.state.choices.cloud ? 'caught' : 'win'); }
+    else this.audio.cue('station');
     this.emitState();
   }
   retry() { const s: SavedRun = { version: 1, stage: this.state.stage, choices: { ...this.state.choices }, seconds: this.state.seconds, pulses: this.state.pulses }; this.start(s); }
-  recoverFiles() { this.state.stage = 2; this.state.choices.cloud = false; this.position.set(-12, 0, -78); this.state.mode = 'playing'; this.state.health = 100; this.resetDrones(); this.save(); this.emitState(); }
+  recoverFiles() {
+    if (this.state.mode !== 'won' || !this.state.choices.cloud) return;
+    const station = checkpoints[2]; this.position.set(station.x, 0, station.z + 2.5);
+    this.yaw = 0; this.pitch = 0; this.jumpVelocity = 0; this.grounded = true; this.resetInput();
+    this.state.mode = 'decision'; this.state.health = 100; this.state.stamina = 100;
+    this.state.x = this.position.x; this.state.z = this.position.z;
+    this.updateStation(); this.positionCamera(0); this.resetDrones(); this.save(); this.emitState();
+  }
   toggleNavigation() {
     if (this.state.mode !== 'playing' || this.state.stage === 0) return;
     this.state.choices.navigation = !this.state.choices.navigation;
@@ -135,15 +155,11 @@ export class ExposedEngine {
       const d = this.drones[i], delta = d.mesh.position.clone().sub(this.camera.position), distance = delta.length();
       if ((distance < 6 || (distance < 19 && delta.normalize().dot(forward) > .72)) && !segmentBlocked(this.position, d.mesh.position, this.city.bounds, 2.3)) { d.stunned = 7; d.lock = 0; d.knowledge = { last: null, age: 0, source: null }; hits++; }
     }
-    this.flash.position.copy(this.camera.position); this.tone(hits ? 250 : 160, .16);
+    this.flash.position.copy(this.camera.position); this.audio.cue('pulse');
     this.message(hits ? 'تعطّلت الدرون مؤقتًا. استغلّ الوقت وغيّر مكانك.' : 'النبضة بتعطّل القريب منك. وجّه التصويب نحو الدرون الأبعد.', hits ? 'Drone disabled temporarily. Move while you can.' : 'EMP disables nearby drones. Aim at drones farther away.', 2.5); this.emitState();
   }
-  setSound(enabled: boolean) { this.muted = !enabled; if (enabled) { try { this.sound ??= new AudioContext(); void this.sound.resume(); this.tone(480, .1); } catch { this.muted = true; } } }
-  private tone(frequency: number, duration: number) {
-    if (this.muted || !this.sound) return;
-    const ctx = this.sound, oscillator = ctx.createOscillator(), gain = ctx.createGain(); oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequency, ctx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(frequency * .45, ctx.currentTime + duration);
-    gain.gain.setValueAtTime(.05, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + duration); oscillator.connect(gain); gain.connect(ctx.destination); oscillator.start(); oscillator.stop(ctx.currentTime + duration);
-  }
+  setSound(enabled: boolean) { return this.audio.setEnabled(enabled); }
+  setVolume(volume: number) { this.audio.setVolume(volume); }
   setCalm(enabled: boolean) { this.calm = enabled; }
   setQuality(value: string) { this.state.quality = value; this.low = value === 'low' || (value === 'auto' && this.mobile); this.applyQuality(); this.emitState(); }
   private applyQuality() { this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.low ? 1 : 1.75)); this.renderer.shadowMap.enabled = !this.low; this.city.sun.castShadow = !this.low; this.resize(); }
@@ -160,7 +176,7 @@ export class ExposedEngine {
     const speed = crouched ? 2.5 : sprint ? 8.2 : 4.8;
     this.state.stamina = THREE.MathUtils.clamp(this.state.stamina + dt * (sprint ? (this.state.choices.cloud ? -13 : -19) : 23), 0, 100);
     const previousY = this.position.y;
-    if (c.jump && this.grounded) { this.jumpVelocity = 5.6; this.grounded = false; this.tone(130, .05); } c.jump = false;
+    if (c.jump && this.grounded) { this.jumpVelocity = 5.6; this.grounded = false; this.audio.cue('jump'); } c.jump = false;
     this.jumpVelocity -= dt * 17; this.position.y = Math.max(0, this.position.y + this.jumpVelocity * dt);
     const dx = (-Math.sin(this.yaw) * f + Math.cos(this.yaw) * r) * speed * dt;
     const dz = (-Math.cos(this.yaw) * f - Math.sin(this.yaw) * r) * speed * dt;
@@ -174,7 +190,7 @@ export class ExposedEngine {
     this.bob += len > .1 ? dt * (sprint ? 13 : 9) : 0;
     this.positionCamera(crouched ? -0.55 : 0, len > .1);
     this.state.x = this.position.x; this.state.z = this.position.z;
-    const cp = checkpoints[this.state.stage]; this.state.distance = Math.hypot(cp.x - this.position.x, cp.z - this.position.z); this.state.near = this.state.distance < 3.5;
+    this.updateStation();
   }
   private positionCamera(offset: number, moving = false) {
     this.camera.position.set(this.position.x, this.position.y + 1.7 + offset + (!this.calm && moving ? Math.sin(this.bob) * .035 : 0), this.position.z);
@@ -208,10 +224,10 @@ export class ExposedEngine {
       }
       if (d.knowledge.last) alert = d.knowledge.source === 'location' && d.knowledge.age < 3 ? 'location' : visible ? 'visual' : alert === 'clear' ? 'search' : alert;
       d.lock = visible && distance < 7 ? d.lock + dt : 0;
-      if (d.lock >= 2 && d.fire <= 0) { this.state.health = Math.max(0, this.state.health - 8); d.fire = 2.5; this.tone(90, .12); this.message('رصدتك الدرون. اقطع خط الرؤية أو عطّلها بنبضة.', 'Drone has visual contact. Break line of sight or use an EMP pulse.', 2); }
+      if (d.lock >= 2 && d.fire <= 0) { this.state.health = Math.max(0, this.state.health - 8); d.fire = 2.5; this.audio.cue('hit'); this.message('رصدتك الدرون. اقطع خط الرؤية أو عطّلها بنبضة.', 'Drone has visual contact. Break line of sight or use an EMP pulse.', 2); }
     }
     this.state.alert = alert;
-    if (this.state.health <= 0) { this.state.mode = 'caught'; this.release(); this.emitState(); }
+    if (this.state.health <= 0) { this.state.mode = 'caught'; this.release(); this.audio.setActive(false); this.audio.cue('caught'); this.emitState(); }
   }
   private drawMap() {
     const c = this.minimap, ctx = c.getContext('2d'); if (!ctx) return;
@@ -246,8 +262,10 @@ export class ExposedEngine {
     if (this.fpsTime > 2.5) { this.state.fps = Math.round(this.fpsFrames / this.fpsTime); if (this.state.quality === 'auto' && !this.low && this.state.fps < 34) { this.low = true; this.applyQuality(); } this.fpsTime = 0; this.fpsFrames = 0; }
     if (this.state.mode === 'playing') {
       this.state.seconds += dt; this.state.cooldown = Math.max(0, this.state.cooldown - dt); this.messageTime -= dt; if (this.messageTime <= 0) this.state.message = '';
+      const previousX = this.position.x, previousZ = this.position.z;
       const steps = Math.max(1, Math.ceil(dt / .025));
       for (let step = 0; step < steps && this.state.mode === 'playing'; step++) { this.move(dt / steps); this.enemies(dt / steps, time); }
+      this.audio.update(this.state.alert, Math.hypot(this.position.x - previousX, this.position.z - previousZ));
     }
     this.pulseLife = Math.max(0, this.pulseLife - dt); this.pulse.visible = this.pulseLife > 0; this.pulse.scale.setScalar(1 + (1 - this.pulseLife / .55) * 17); (this.pulse.material as THREE.MeshBasicMaterial).opacity = this.pulseLife * .25; this.flash.intensity = this.pulseLife * 3;
     for (let i = 0; i < this.city.beacons.length; i++) { this.city.beacons[i].visible = i === this.state.stage; this.city.beacons[i].children[0].rotation.z = this.calm ? 0 : time * .2; }
@@ -257,6 +275,6 @@ export class ExposedEngine {
   };
   dispose() {
     this.disposed = true; cancelAnimationFrame(this.frame); this.release(); this.resizeObserver.disconnect(); this.removers.forEach(fn => fn());
-    this.city.dispose(); this.pulse.geometry.dispose(); (this.pulse.material as THREE.Material).dispose(); this.route.geometry.dispose(); (this.route.material as THREE.Material).dispose(); this.renderer.dispose(); this.renderer.forceContextLoss(); this.renderer.domElement.remove(); void this.sound?.close().catch(() => undefined);
+    this.city.dispose(); this.pulse.geometry.dispose(); (this.pulse.material as THREE.Material).dispose(); this.route.geometry.dispose(); (this.route.material as THREE.Material).dispose(); this.renderer.dispose(); this.renderer.forceContextLoss(); this.renderer.domElement.remove(); this.audio.dispose();
   }
 }

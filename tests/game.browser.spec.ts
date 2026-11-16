@@ -19,8 +19,8 @@ async function start(page: Page) {
   await page.locator('[data-start]').click();
   await expect(page.locator('[data-briefing]')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('[data-briefing] h2, [data-briefing] kbd')).toHaveCount(0);
-  await expect(page.locator('[data-briefing] strong')).toHaveCount(4);
-  await expect(page.locator('[data-briefing] mark')).toHaveCount(4);
+  await expect(page.locator('[data-briefing] strong')).toHaveCount(3);
+  await expect(page.locator('[data-briefing] mark')).toHaveCount(3);
   await page.locator('[data-briefing-start]').click();
   await expect(game(page)).toHaveAttribute('data-mode', 'playing');
 }
@@ -125,7 +125,7 @@ test('navigation kiosk applies a location sharing decision through the actual UI
   await expect(page.locator('[data-interact] kbd')).toHaveText('Enter');
   await page.keyboard.press('Enter');
   await expect(game(page)).toHaveAttribute('data-mode', 'decision');
-  await expect(page.getByRole('heading', { name: 'أقصر طريق. مين بعرفه معك؟' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'الملاحة', exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/exposed-navigation-decision.png' });
   await page.locator('[data-choice=share]').click();
   await expect(game(page)).toHaveAttribute('data-stage', '1');
@@ -298,6 +298,9 @@ test('small phone portrait and landscape layouts keep controls on screen', async
       await assertCanvasFits(page);
       await expect(page.locator('[data-joystick]')).toBeVisible();
       await expect(page.locator('[data-navigation]')).toBeVisible();
+      expect((await page.locator('[data-joystick]').boundingBox())!.width).toBeLessThanOrEqual(96);
+      expect((await page.locator('[data-pulse]').boundingBox())!.width).toBeLessThanOrEqual(48);
+      for (const name of ['قفز', 'ركض', 'انخفاض']) expect((await page.getByRole('button', { name, exact: true }).boundingBox())!.width).toBeLessThanOrEqual(48);
       for (const selector of ['[data-joystick]', '[data-navigation]', '[data-pulse]', '[data-game-close]']) {
         const box = (await page.locator(selector).boundingBox())!;
         expect(box.x).toBeGreaterThanOrEqual(0);
@@ -308,5 +311,82 @@ test('small phone portrait and landscape layouts keep controls on screen', async
       await page.screenshot({ path: `test-results/exposed-small-${size.width > size.height ? 'landscape' : 'portrait'}.png` });
     }
     await close(page);
+  } finally { await context.close(); }
+});
+
+test('soundtrack starts with play, pauses, mutes, and releases its audio context', async ({ page }) => {
+  await page.addInitScript(() => {
+    const probe = { contexts: [] as AudioContext[], starts: 0, stops: 0, analyser: null as AnalyserNode | null };
+    Object.assign(window, { exposedAudioProbe: probe });
+    const NativeAudio = window.AudioContext;
+    window.AudioContext = class extends NativeAudio {
+      constructor() { super(); probe.contexts.push(this); }
+      createGain() {
+        const gain = super.createGain();
+        if (!probe.analyser) { probe.analyser = this.createAnalyser(); gain.connect(probe.analyser); }
+        return gain;
+      }
+      createOscillator() {
+        const oscillator = super.createOscillator(), start = oscillator.start.bind(oscillator), stop = oscillator.stop.bind(oscillator);
+        oscillator.start = time => { probe.starts++; start(time); };
+        oscillator.stop = time => { probe.stops++; stop(time); };
+        return oscillator;
+      }
+    };
+  });
+  const audio = () => page.evaluate(() => {
+    const probe = (window as unknown as { exposedAudioProbe: { contexts: AudioContext[]; starts: number; stops: number; analyser: AnalyserNode | null } }).exposedAudioProbe;
+    const samples = new Float32Array(256); probe.analyser?.getFloatTimeDomainData(samples);
+    return { starts: probe.starts, stops: probe.stops, states: probe.contexts.map(context => context.state), level: Math.max(...samples.map(Math.abs)) };
+  });
+  await launch(page);
+  expect((await audio()).states).toEqual([]);
+  await start(page);
+  await expect.poll(async () => (await audio()).level).toBeGreaterThan(.001);
+  await expect.poll(async () => (await audio()).starts).toBeGreaterThan(2);
+  await page.locator('[data-pause]').click();
+  const paused = await audio();
+  await page.getByRole('button', { name: 'الصوت شغّال', exact: true }).click();
+  await expect.poll(async () => (await audio()).states).toEqual(['suspended']);
+  const volume = page.getByRole('slider', { name: 'مستوى الصوت' });
+  await volume.focus(); await page.keyboard.press('Home');
+  await expect(volume).toHaveValue('0');
+  expect((await audio()).starts).toBe(paused.starts);
+  await page.getByRole('button', { name: 'الصوت مغلق', exact: true }).click();
+  await expect.poll(async () => (await audio()).states).toEqual(['running']);
+  await page.locator('[data-resume]').click();
+  await expect.poll(async () => (await audio()).starts).toBeGreaterThan(paused.starts);
+  await close(page);
+  await expect.poll(async () => (await audio()).states).toEqual(['closed']);
+});
+
+test('look sensitivity changes touch turning while leaving movement available', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  const errors = pageErrors(page), turns: number[] = [];
+  try {
+    const session = await context.newCDPSession(page);
+    for (const [key, expected] of [['Home', '30'], ['End', '150']]) {
+      await launch(page); await start(page);
+      await page.locator('[data-pause]').tap();
+      const sensitivity = page.getByRole('slider', { name: 'حساسية النظر' });
+      await sensitivity.focus(); await page.keyboard.press(key);
+      await expect(sensitivity).toHaveValue(expected);
+      await page.locator('[data-resume]').tap();
+      const before = await position(page);
+      await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, x: 190, y: 400 }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x: 250, y: 400 }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.keyboard.down('KeyW');
+      await expect.poll(async () => (await position(page)).z).toBeLessThan(before.z - 1);
+      await page.keyboard.up('KeyW');
+      const after = await position(page);
+      turns.push(Math.abs((after.x - before.x) / (after.z - before.z)));
+      await close(page);
+    }
+    expect(turns[0]).toBeGreaterThan(.01);
+    expect(turns[1]).toBeGreaterThan(turns[0] * 3);
+    await session.detach();
+    expect(errors).toEqual([]);
   } finally { await context.close(); }
 });

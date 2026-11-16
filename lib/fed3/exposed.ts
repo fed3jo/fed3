@@ -11,6 +11,12 @@ export const checkpoints: Checkpoint[] = [
 ];
 export const START: Point = { x: 0, z: 14 };
 export const SAVE_KEY = 'fed3-exposed-v1';
+export function nearbyStation(stage: number, from: Point): number | null {
+  const near = (index: number) => Math.hypot(from.x - checkpoints[index].x, from.z - checkpoints[index].z) < 3.5;
+  if (near(stage)) return stage;
+  if (stage === 3 && near(2)) return 2;
+  return null;
+}
 export function streetRoute(stage: number, from: Point): Point[] {
   const destination = checkpoints[stage];
   if (stage === 0 || Math.hypot(from.x - destination.x, from.z - destination.z) < 4) return [{ ...from }, { x: destination.x, z: destination.z }];
