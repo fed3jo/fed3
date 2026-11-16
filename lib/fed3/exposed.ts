@@ -11,6 +11,9 @@ export const checkpoints: Checkpoint[] = [
 ];
 export const START: Point = { x: 0, z: 14 };
 export const SAVE_KEY = 'fed3-exposed-v1';
+export function normalizeTeamCode(value: string) {
+  return value.replace(/[٠-٩۰-۹]/g, digit => String(digit.charCodeAt(0) - (digit >= '۰' ? 1776 : 1632))).replace(/[^0-9]/g, '').slice(0, 4);
+}
 export function nearbyStation(stage: number, from: Point): number | null {
   const near = (index: number) => Math.hypot(from.x - checkpoints[index].x, from.z - checkpoints[index].z) < 3.5;
   if (near(stage)) return stage;

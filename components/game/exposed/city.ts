@@ -163,10 +163,23 @@ export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, r
   for (let i = 0; i < checkpoints.length; i++) {
     const cp = checkpoints[i];
     box(navy, cp.x, .95, cp.z, .8, 1.9, .65); solid(cp.x, cp.z, .8, .65, 1.9);
-    box(orange, cp.x, 1.6, cp.z + .34, .62, .4, .02);
+    box(orange, cp.x, 1.45, cp.z + .34, .64, .7, .02);
+    const display = document.createElement('canvas'); display.width = display.height = 256;
+    const screen = display.getContext('2d')!; screen.fillStyle = '#0a2033'; screen.fillRect(0, 0, 256, 256);
+    screen.strokeStyle = '#ffb16d'; screen.lineWidth = 8; screen.lineCap = 'round'; screen.lineJoin = 'round';
+    screen.beginPath();
+    if (i === 0) { screen.moveTo(62, 129); screen.lineTo(62, 71); screen.lineTo(190, 71); screen.moveTo(163, 44); screen.lineTo(190, 71); screen.lineTo(163, 98); }
+    if (i === 1) { screen.arc(128, 57, 23, 0, Math.PI * 2); screen.moveTo(79, 134); screen.bezierCurveTo(79, 79, 177, 79, 177, 134); }
+    if (i === 2) { screen.moveTo(61, 130); screen.lineTo(61, 47); screen.lineTo(110, 47); screen.lineTo(130, 67); screen.lineTo(194, 67); screen.lineTo(194, 130); screen.closePath(); }
+    if (i === 3) { screen.moveTo(63, 91); screen.lineTo(109, 130); screen.lineTo(191, 45); }
+    screen.stroke(); screen.font = 'bold 52px monospace'; screen.textAlign = 'center'; screen.fillStyle = '#c7e1d5'; screen.fillText(`0${i + 1}`, 128, 212);
+    const screenTexture = new THREE.CanvasTexture(display); screenTexture.colorSpace = THREE.SRGBColorSpace; textures.push(screenTexture);
+    const screenMaterial = new THREE.MeshBasicMaterial({ map: screenTexture }); materials.push(screenMaterial);
+    const screenGeometry = new THREE.PlaneGeometry(.55, .6); geometries.push(screenGeometry);
+    const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial); screenMesh.position.set(cp.x, 1.45, cp.z + .36); scene.add(screenMesh);
     sign(ar ? cp.ar : cp.en, `FED3 / 0${i + 1}`, cp.x, 2.5, cp.z + .36, 2.5);
     const group = new THREE.Group(); group.position.set(cp.x, .04, cp.z);
-    const ringGeo = new THREE.RingGeometry(1.35, 1.48, 48); geometries.push(ringGeo);
+    const ringGeo = new THREE.RingGeometry(2.6, 2.7, 48); geometries.push(ringGeo);
     const bm = new THREE.MeshBasicMaterial({ color: '#fc8a3a', transparent: true, opacity: .8, side: THREE.DoubleSide }); materials.push(bm);
     const ring = new THREE.Mesh(ringGeo, bm); ring.rotation.x = -Math.PI / 2; group.add(ring);
     const pillarGeo = new THREE.CylinderGeometry(.035, .035, 9, 5); geometries.push(pillarGeo);

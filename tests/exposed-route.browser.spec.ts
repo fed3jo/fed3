@@ -44,8 +44,17 @@ test('complete the city route with independent files', async ({ page }) => {
   await walk(page, 'z', -43, true);
   await walk(page, 'x', 12);
   await page.locator('[data-interact]').click();
+  await expect(page.locator('[data-visual=contacts]')).toBeVisible();
+  await page.locator('[data-station-close]').click();
+  await expect(page.locator('[data-exposed-game]')).toHaveAttribute('data-stage', '1');
+  await expect(page.locator('[data-exposed-game]')).toHaveAttribute('data-mode', 'playing');
+  await page.keyboard.press('Enter');
   await page.locator('[data-choice="private"]').click();
-  await page.locator('[data-team-code]').fill('1407');
+  await page.locator('[data-team-code]').fill('0000');
+  await page.locator('[data-unlock]').click();
+  await expect(page.locator('#team-code-error')).toBeVisible();
+  await page.locator('[data-team-code]').fill('١٤٠٧');
+  await expect(page.locator('[data-team-code]')).toHaveValue('1407');
   await page.locator('[data-unlock]').click();
   await walk(page, 'x', 0);
   await walk(page, 'z', -83, true);

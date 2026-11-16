@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, type PointerEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type MouseEvent } from 'react';
 import type { Locale } from '@/lib/fed3/config';
-import { checkpoints, readRun, SAVE_KEY, type SavedRun } from '@/lib/fed3/exposed';
+import { checkpoints, normalizeTeamCode, readRun, SAVE_KEY, type SavedRun } from '@/lib/fed3/exposed';
 import { ExposedEngine, type Snapshot } from './engine';
+import MissionBriefing from './MissionBriefing';
+import MissionVisual from './MissionVisual';
 import styles from './exposed.module.css';
 
 const decisionCopy = {
@@ -19,8 +21,8 @@ const decisionCopy = {
   ],
 };
 
-function Icon({ name }: { name: 'close' | 'pause' | 'pulse' | 'jump' | 'sound' | 'full' | 'signal' | 'run' | 'shield' }) {
-  const paths = { close: 'm6 6 12 12M18 6 6 18', pause: 'M8 5v14M16 5v14', pulse: 'm13 2-9 12h7l-1 8 10-13h-7l0-7', jump: 'M12 20V4m-6 6 6-6 6 6', sound: 'M11 4 5 9H2v6h3l6 5V4Zm5 3c4 2 4 8 0 10', full: 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5', signal: 'M5 16a10 10 0 0 1 14 0M2 12a14 14 0 0 1 20 0M9 20a4 4 0 0 1 6 0M12 22h.01', run: 'm7 21 3-7 4 3v5m-9-8 4-6 5 1 3 4h4M15 3h.01', shield: 'M12 3 3 7v6c0 4 9 8 9 8s9-4 9-8V7l-9-4Z' };
+function Icon({ name }: { name: 'close' | 'pause' | 'pulse' | 'jump' | 'sound' | 'full' | 'signal' | 'run' | 'shield' | 'file' | 'cloud' }) {
+  const paths = { file: 'M5 3h9l5 5v13H5V3Zm9 0v6h5M8 13h8M8 17h6', cloud: 'M7 18H5a4 4 0 0 1-1-8 7 7 0 0 1 13-2 5 5 0 0 1 2 10h-2m-8-4 3-3 3 3m-3-3v10', close: 'm6 6 12 12M18 6 6 18', pause: 'M8 5v14M16 5v14', pulse: 'm13 2-9 12h7l-1 8 10-13h-7l0-7', jump: 'M12 20V4m-6 6 6-6 6 6', sound: 'M11 4 5 9H2v6h3l6 5V4Zm5 3c4 2 4 8 0 10', full: 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5', signal: 'M5 16a10 10 0 0 1 14 0M2 12a14 14 0 0 1 20 0M9 20a4 4 0 0 1 6 0M12 22h.01', run: 'm7 21 3-7 4 3v5m-9-8 4-6 5 1 3 4h4M15 3h.01', shield: 'M12 3 3 7v6c0 4 9 8 9 8s9-4 9-8V7l-9-4Z' };
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
 
@@ -31,21 +33,14 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
   const [s, setS] = useState<Snapshot | null>(null), [saved, setSaved] = useState<SavedRun | null>(null), [error, setError] = useState('');
   const [sound, setSound] = useState(true), [volume, setVolume] = useState(45), [calm, setCalm] = useState(false), [sprint, setSprint] = useState(false), [crouch, setCrouch] = useState(false), [fullscreen, setFullscreen] = useState(false);
   const [touch, setTouch] = useState(false);
-  const [codeNeeded, setCodeNeeded] = useState(false), [teamCode, setTeamCode] = useState('');
+  const [codeNeeded, setCodeNeeded] = useState(false), [teamCode, setTeamCode] = useState(''), [codeError, setCodeError] = useState(false);
   const [briefing, setBriefing] = useState(false), [briefingResume, setBriefingResume] = useState(false);
   const playing = s?.mode === 'playing';
 
-  const briefingCopy = ar ? [
-    ['ملفاتك وملفات الفريق:', 'وصلها لمقر Fed3.'],
-    ['تجنّب الرصد:', 'اختبئ أو غيّر مسارك.'],
-    ['نبضة EMP:', 'بتعطّل الدرون مؤقتًا حتى تهرب.'],
-  ] : [
-    ['Your files and team data:', 'Deliver them to Fed3 HQ.'],
-    ['Avoid detection:', 'Take cover or change your route.'],
-    ['EMP pulse:', 'Temporarily disables drones so you can escape.'],
-  ];
+  const briefingTick = useCallback(() => engine.current?.briefingTick(), []);
+  useEffect(() => { if (!briefing) engine.current?.stopBriefing(); }, [briefing]);
 
-  const openBriefing = (resume: boolean) => { setBriefingResume(resume); setBriefing(true); };
+  const openBriefing = (resume: boolean) => { setSound(engine.current?.setSound(sound) ?? false); setBriefingResume(resume); setBriefing(true); };
   const startFromBriefing = () => { setBriefing(false); start(briefingResume); };
   useEffect(() => {
     const previousOverflow = document.body.style.overflow, previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -65,7 +60,7 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
     };
   }, [ar]);
   useEffect(() => { if (!playing) { setSprint(false); setCrouch(false); stick.current = null; if (knob.current) knob.current.style.transform = 'translate(0px,0px)'; } }, [playing]);
-  useEffect(() => { setCodeNeeded(false); setTeamCode(''); }, [s?.mode, s?.stage]);
+  useEffect(() => { setCodeNeeded(false); setTeamCode(''); setCodeError(false); }, [s?.mode, s?.stage]);
   useEffect(() => {
     const selector = s?.mode === 'playing' ? '[data-world] canvas' : s?.mode === 'paused' ? '[data-resume]' : s?.mode === 'decision' ? '[data-choice="share"]' : briefing ? '[data-briefing-start]' : s?.mode === 'intro' ? '[data-start]:not(:disabled)' : 'section button';
     root.current?.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true });
@@ -106,20 +101,22 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
     <label className={styles.rangeSetting}>{ar ? 'حساسية النظر' : 'Look sensitivity'}<input type="range" min="30" max="150" step="5" value={Math.round((s?.sensitivity ?? .7) * 100)} aria-label={ar ? 'حساسية النظر' : 'Look sensitivity'} onChange={e => engine.current?.setSensitivity(Number(e.target.value) / 100)} /><output>{Math.round((s?.sensitivity ?? .7) * 100)}%</output></label>
     <button aria-pressed={calm} onClick={() => { setCalm(!calm); engine.current?.setCalm(!calm); }}>{ar ? 'تخفيف حركة الكاميرا' : 'Reduce camera motion'}<span>{calm ? '✓' : '○'}</span></button>
   </div>;
+  const escape = () => {
+    if (briefing) setBriefing(false);
+    else if (engine.current?.state.mode === 'decision') engine.current.closeStation();
+    else if (engine.current?.state.mode === 'playing' || engine.current?.state.mode === 'paused') engine.current.escapePause();
+    else onClose();
+  };
   return <dialog ref={root} className={styles.game} dir={ar ? 'rtl' : 'ltr'} aria-label={ar ? 'لعبة مكشوف' : 'Exposed game'} onKeyDownCapture={e => {
     if (e.key !== 'Escape') return;
-    e.preventDefault(); e.stopPropagation();
-    if (briefing) setBriefing(false);
-    else if (engine.current?.state.mode === 'playing') engine.current.pause();
-    else if (engine.current?.state.mode === 'paused') engine.current.resume();
-    else onClose();
+    e.preventDefault(); e.stopPropagation(); escape();
   }} onKeyDown={e => {
     if (e.key !== 'Tab') return;
     const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),canvas[tabindex="0"]')).filter(el => el.getClientRects().length && (playing || el.tagName !== 'CANVAS'));
     if (!items.length) return;
     const index = items.indexOf(document.activeElement as HTMLElement);
     if (index < 0 || (e.shiftKey && index === 0) || (!e.shiftKey && index === items.length - 1)) { e.preventDefault(); items[e.shiftKey ? items.length - 1 : 0].focus(); }
-  }} onCancel={e => { e.preventDefault(); }} data-exposed-game data-mode={s?.mode ?? 'loading'} data-stage={s?.stage ?? 0} data-station={s?.station ?? ''} data-x={s?.x.toFixed(2)} data-z={s?.z.toFixed(2)} data-touch={touch}>
+  }} onCancel={e => { e.preventDefault(); escape(); }} data-exposed-game data-mode={s?.mode ?? 'loading'} data-stage={s?.stage ?? 0} data-station={s?.station ?? ''} data-look-locked={s?.lookLocked ?? false} data-yaw={s?.yaw.toFixed(4)} data-x={s?.x.toFixed(2)} data-z={s?.z.toFixed(2)} data-touch={touch}>
     <div ref={host} className={styles.world} data-world />
     <div className={`${styles.vignette} ${s && s.health < 35 ? styles.hurt : ''}`} />
     <header className={styles.topbar}>
@@ -129,6 +126,7 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
     <aside className={styles.map} aria-label={ar ? 'خريطة المدينة' : 'City map'} data-active={playing}><div><span>{ar ? 'المدينة / القطاع 07' : 'CITY / SECTOR 07'}</span><b>N ↑</b></div><canvas ref={map} width="180" height="250" /><small><i />{ar ? 'إنت هون' : 'YOUR POSITION'}<i />{ar ? 'الوجهة' : 'DESTINATION'}</small></aside>
     {playing && s && <>
       <div className={styles.mission}><span className={styles.eyebrow}>{ar ? 'المهمة' : 'OBJECTIVE'} / 0{s.stage + 1}</span><h2>{ar ? cp.ar : cp.en}</h2><div className={styles.missionMeta}><b dir="ltr">{Math.round(s.distance)} m</b><span>{ar ? 'اتبع الضوء البرتقالي' : 'Follow the orange beacon'}</span></div><div className={styles.steps}>{checkpoints.map((p, i) => <span key={p.en} data-done={i < s.stage} data-current={i === s.stage} />)}</div></div>
+      <div className={styles.inventory} data-game-inventory data-cloud={s.choices.cloud}><Icon name={s.choices.cloud ? 'cloud' : 'file'} /><span>{ar ? s.choices.cloud ? 'سحابة فقط' : 'نسخة محلية' : s.choices.cloud ? 'CLOUD ONLY' : 'LOCAL COPY'}</span></div>
       <div className={styles.status} data-alert={s.alert}><span className={styles.statusDot} />{labels[s.alert]}<small dir="ltr">{time(s.seconds)}</small></div>
       <div className={styles.crosshair}><span /><i /></div>
       {s.message && <div className={styles.radio} role="status"><span>FED3 / {ar ? 'الاتصال' : 'COMMS'}</span><p>{s.message}</p></div>}
@@ -145,19 +143,23 @@ export default function ExposedGame({ locale, onClose }: { locale: Locale; onClo
       </div>
     </>}
     {(s?.mode === 'intro' || !s) && !error && <div className={styles.intro} data-intro><div className={styles.introContent}><p className={styles.chapter}>01 / {ar ? 'لعبة مطاردة وخصوصية' : 'A PRIVACY THRILLER'}</p><h1>{ar ? 'كل خطوة.' : 'Every step.'}<br /><em>{ar ? 'إلها أثر.' : 'Leaves a trace.'}</em></h1><p className={styles.introLead}>{ar ? 'وصل ملفات الفريق للمقرّ، وتجنّب الدرونات.' : 'Deliver the team’s files to the hub. Stay clear of drones.'}</p><div className={styles.startRow}><button className={styles.primary} disabled={!s?.ready} onClick={() => openBriefing(Boolean(saved))} data-start>{s?.ready ? saved ? ar ? 'كمّل مهمتك' : 'Resume mission' : ar ? 'ادخل المدينة' : 'Enter the city' : ar ? 'تجهيز المدينة…' : 'Preparing city…'}<span>↗</span></button>{saved && <button className={styles.secondary} disabled={!s?.ready} onClick={() => openBriefing(false)}>{ar ? 'بداية جديدة' : 'New mission'}</button>}</div><p className={styles.introNote}>{ar ? 'محاكاة ببيانات وأذونات خيالية.' : 'A simulation with fictional data and permissions.'}</p></div><div className={styles.introCaption}><span>AL MADINA / 07</span><b>{ar ? 'الطريق إلك. البيانات لمين؟' : 'Your route. Whose data?'}</b></div></div>}
-    {briefing && !error && (
-      <div className={styles.briefingOverlay} data-briefing role="dialog" aria-modal="true" aria-label={ar ? 'برقية المهمة' : 'Mission Briefing'}>
-        <section className={styles.briefingCard}>
-          <div className={styles.briefingBody}>
-            {briefingCopy.map(([title, text]) => <p className={styles.briefingText} key={title}><strong><mark>{title}</mark> {text}</strong></p>)}
-          </div>
-          <button className={styles.briefingStart} onClick={startFromBriefing} data-briefing-start autoFocus>
-            {briefingResume ? (ar ? 'متابعة المهمة' : 'Resume mission') : (ar ? 'ابدأ المهمة' : 'Start mission')}
-          </button>
-        </section>
-      </div>
-    )}
-    {s?.mode === 'decision' && <div className={styles.overlay}><section className={styles.panel} aria-labelledby="decision-title"><h2 id="decision-title">{decision.title}</h2><p>{decision.text}</p><div className={styles.choices}><button onClick={() => engine.current?.choose(true)} data-choice="share"><Icon name="signal" /><span>{decision.yes}<small>{decision.yesNote}</small></span><b>↗</b></button><button onClick={() => { if (station === 1) setCodeNeeded(true); else engine.current?.choose(false); }} data-choice="private"><Icon name="shield" /><span>{decision.no}<small>{decision.noNote}</small></span><b>↗</b></button></div>{codeNeeded && <form className={styles.codeForm} onSubmit={e => { e.preventDefault(); if (teamCode === '1407') engine.current?.choose(false); }}><label htmlFor="team-code">{ar ? 'رسالة الفريق: رمز البوابة 1407' : 'Team message: gate code 1407'}</label><div><input id="team-code" aria-label={ar ? 'رمز الفريق' : 'Team code'} inputMode="numeric" autoComplete="off" maxLength={4} value={teamCode} onChange={e => setTeamCode(e.target.value.replace(/[^0-9]/g, ''))} data-team-code autoFocus /><button type="submit" disabled={teamCode !== '1407'} data-unlock>{ar ? 'افتح البوابة' : 'Unlock gate'}</button></div></form>}</section></div>}
+    {briefing && !error && <MissionBriefing ar={ar} calm={calm} resume={briefingResume} onType={briefingTick} onStart={startFromBriefing} />}
+    {s?.mode === 'decision' && <div className={styles.overlay}>
+      <section className={`${styles.panel} ${styles.stationPanel}`} aria-labelledby="decision-title" data-station-panel>
+        <div className={styles.stationHeading}><span>0{station + 1} / 03</span><button onClick={() => engine.current?.closeStation()} aria-label={ar ? 'إغلاق المحطة' : 'Close station'} data-station-close><Icon name="close" /></button></div>
+        <MissionVisual kind={station === 0 ? 'navigation' : station === 1 ? 'contacts' : 'files'} label={decision.text} />
+        <h2 id="decision-title">{decision.title}</h2><p>{decision.text}</p>
+        <div className={styles.choices}>
+          <button onClick={() => engine.current?.choose(true)} data-choice="share"><Icon name={station === 2 ? 'cloud' : 'signal'} /><span>{decision.yes}<small>{decision.yesNote}</small></span><b>↗</b></button>
+          <button onClick={() => { if (station === 1) setCodeNeeded(true); else engine.current?.choose(false); }} data-choice="private"><Icon name={station === 2 ? 'file' : 'shield'} /><span>{decision.no}<small>{decision.noNote}</small></span><b>↗</b></button>
+        </div>
+        {codeNeeded && <form className={styles.codeForm} onSubmit={e => { e.preventDefault(); if (teamCode === '1407') engine.current?.choose(false); else setCodeError(true); }}>
+          <label htmlFor="team-code">{ar ? 'رمز الفريق: 1407' : 'Team code: 1407'}</label>
+          <div><input id="team-code" aria-label={ar ? 'رمز الفريق' : 'Team code'} aria-invalid={codeError} aria-describedby={codeError ? 'team-code-error' : undefined} inputMode="numeric" autoComplete="off" value={teamCode} onChange={e => { setTeamCode(normalizeTeamCode(e.target.value)); setCodeError(false); }} data-team-code autoFocus /><button type="submit" disabled={teamCode.length !== 4} data-unlock>{ar ? 'افتح البوابة' : 'Unlock gate'}</button></div>
+          {codeError && <p id="team-code-error" role="alert">{ar ? 'الرمز غير صحيح. جرّب 1407.' : 'Incorrect code. Try 1407.'}</p>}
+        </form>}
+      </section>
+    </div>}
     {s?.mode === 'paused' && <div className={styles.overlay}><section className={styles.panel}><p className={styles.chapter}>FED3 / {ar ? 'استراحة' : 'PAUSED'}</p><h2>{ar ? 'المدينة بتستناك.' : 'The city can wait.'}</h2>{!touch && <p>{ar ? 'WASD حركة · اسحب للنظر · Space قفز · Shift ركض · F نبضة · Enter محطة · N موقع · C انخفاض' : 'WASD move · Drag to look · Space jump · Shift sprint · F EMP · Enter station · N location · C crouch'}</p>}{options}<button className={styles.primary} onClick={() => engine.current?.resume()} data-resume>{ar ? 'كمّل المهمة' : 'Resume mission'}<span>→</span></button><p className={styles.panelNote}>{s.save ? ar ? 'التقدّم محفوظ على جهازك.' : 'Progress saved on this device.' : ar ? 'التخزين غير متاح. بتقدر تكمّل ضمن هاي الجلسة.' : 'Storage unavailable. You can continue this session.'}</p></section></div>}
     {s?.mode === 'caught' && <div className={styles.overlay}><section className={styles.panel}><p className={styles.chapter}>SIGNAL LOST / 07</p><h2>{ar ? 'وصلوا إلك.' : 'They found you.'}</h2><p>{ar ? 'جرّب تقطع بثّ الموقع، تختبئ وراء مبنى، أو تعطّل الدرون قبل الاقتراب. بنرجعك لآخر محطة مع قراراتك.' : 'Stop location sharing, hide behind a building, or disable a drone before approaching. Return to your last checkpoint with your decisions.'}</p><button className={styles.primary} onClick={() => engine.current?.retry()}>{ar ? 'ارجع لآخر محطة' : 'Retry checkpoint'}<span>↗</span></button></section></div>}
     {s?.mode === 'won' && <div className={styles.overlay}><section className={`${styles.panel} ${styles.result}`}><p className={styles.chapter}>{ar ? 'نهاية المهمة / أثر قراراتك' : 'MISSION COMPLETE / YOUR FOOTPRINT'}</p><h2>{ar ? s.choices.cloud ? 'إنت وصلت. الملفات لسه عندهم.' : 'وصلت. والملفات بإيدك.' : s.choices.cloud ? 'You arrived. The files did not.' : 'You made it. Files in hand.'}</h2><p>{ar ? s.choices.cloud ? 'حساب نكسا توقّف قبل التسليم. ارجع للمحطة وخذ نسخة محلية.' : 'سلّمت نسخة مستقلة للفريق. وقف المشاركة ما بمحي البيانات اللي وصلت.' : s.choices.cloud ? 'NEXA suspended your account before delivery. Return to the station for a local copy.' : 'You delivered an independent copy. Stopping sharing does not erase data already disclosed.'}</p><div className={styles.resultStats}><div><b dir="ltr">{time(s.seconds)}</b><span>{ar ? 'وقت المهمة' : 'MISSION TIME'}</span></div><div><b>{s.pulses}</b><span>{ar ? 'نبضات تعطيل' : 'EMP PULSES'}</span></div><div><b>{s.choices.contacts ? ar ? 'انكشفت' : 'SHARED' : ar ? 'محلية' : 'LOCAL'}</b><span>{ar ? 'جهات اتصال الفريق' : 'TEAM CONTACTS'}</span></div></div><div className={styles.endLinks}><a href={`/${locale}/apps/brave/`} target="_blank" rel="noreferrer">{ar ? 'تعرّف على تقليل التتبّع' : 'Explore tracker blocking'} ↗</a><a href={`/${locale}/apps/nextcloud/`} target="_blank" rel="noreferrer">{ar ? 'افهم حفظ الملفات ومشاركتها' : 'Understand file control'} ↗</a></div>{s.choices.cloud && <button className={styles.primary} onClick={() => engine.current?.recoverFiles()}>{ar ? 'ارجع وخذ نسخة محلية' : 'Return for a local copy'}<span>↗</span></button>}<div className={styles.startRow}><button className={styles.secondary} onClick={() => engine.current?.start()}>{ar ? 'جرّب قرارات ثانية' : 'Try other decisions'}</button><button className={styles.secondary} onClick={onClose}>{ar ? 'ارجع للبدائل' : 'Back to alternatives'}</button></div></section></div>}

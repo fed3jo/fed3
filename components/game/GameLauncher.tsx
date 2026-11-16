@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, type ErrorInfo, type ReactNode, useRef, useState } from 'react';
+import { Component, type ErrorInfo, type ReactNode, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Locale } from '@/lib/fed3/config';
 import styles from './launcher.module.css';
@@ -48,14 +48,15 @@ function CityArtwork({ ar }: { ar: boolean }) {
   </svg>;
 }
 export function GameLauncher({ locale }: { locale: Locale }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false), [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const launchButton = useRef<HTMLButtonElement>(null);
   const ar = locale === 'ar';
   const close = () => { setOpen(false); requestAnimationFrame(() => launchButton.current?.focus({ preventScroll: true })); };
   return <>
     <section id="game" tabIndex={-1} className={styles.teaser} aria-labelledby="game-heading" data-game-teaser>
       <div className={styles.art}><CityArtwork ar={ar} /><div className={styles.artLabel}><span /><span>{ar ? 'مدينة تحت المراقبة' : 'A city under surveillance'}</span><span className={styles.coordinates}>31°57′ N / 35°56′ E</span></div></div>
-      <div className={styles.copy}><p className={styles.eyebrow}><span />03 / {ar ? 'تجربة تفاعلية ثلاثية الأبعاد' : 'An interactive 3D experience'}</p><h2 id="game-heading">{ar ? 'مكشوف' : 'Exposed'}<span>.</span></h2><p className={styles.statement}>{ar ? 'المدينة بتعرف وين إنت.' : 'The city knows where you are.'}</p><p className={styles.lead}>{ar ? 'معك ملفات الفريق، وقدّامك طريق للمقر. اقطع المدينة، تجنّب الدرونات، واكتشف كيف التطبيقات اللي بتسهّل طريقك ممكن تكشفه لغيرك.' : 'You have the team’s files and a route to their headquarters. Cross the city, evade the drones, and discover how the apps guiding you can give away your route.'}</p><div className={styles.tags}><span>{ar ? 'مدينة 3D' : '3D city'}</span><span>{ar ? 'لمس + كمبيوتر' : 'Touch + desktop'}</span><span>{ar ? 'طولي أو عرضي' : 'Portrait or landscape'}</span></div><button ref={launchButton} className={styles.start} onClick={() => setOpen(true)} data-game-launch><span>{ar ? 'ادخل المدينة' : 'Enter the city'}</span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></button><p className={styles.note}>{ar ? 'محاكاة ببيانات خيالية. اللعبة ما بتطلب موقعك ولا ملفاتك. تقدّمك بينحفظ بهالمتصفح.' : 'A simulation with fictional data. The game does not ask for your location or files. Progress is saved in this browser.'} <a href={`/${locale}/privacy/`}>{ar ? 'كيف بنحفظ تقدّمك؟' : 'How is progress stored?'}</a></p></div>
+      <div className={styles.copy}><p className={styles.eyebrow}><span />03 / {ar ? 'تجربة تفاعلية ثلاثية الأبعاد' : 'An interactive 3D experience'}</p><h2 id="game-heading">{ar ? 'مكشوف' : 'Exposed'}<span>.</span></h2><p className={styles.statement}>{ar ? 'المدينة بتعرف وين إنت.' : 'The city knows where you are.'}</p><p className={styles.lead}>{ar ? 'معك ملفات الفريق، وقدّامك طريق للمقر. اقطع المدينة، تجنّب الدرونات، واكتشف كيف التطبيقات اللي بتسهّل طريقك ممكن تكشفه لغيرك.' : 'You have the team’s files and a route to their headquarters. Cross the city, evade the drones, and discover how the apps guiding you can give away your route.'}</p><div className={styles.tags}><span>{ar ? 'مدينة 3D' : '3D city'}</span><span>{ar ? 'لمس + كمبيوتر' : 'Touch + desktop'}</span><span>{ar ? 'طولي أو عرضي' : 'Portrait or landscape'}</span></div><button ref={launchButton} className={styles.start} disabled={!ready} onClick={() => setOpen(true)} data-game-launch><span>{ar ? 'ادخل المدينة' : 'Enter the city'}</span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></button><p className={styles.note}>{ar ? 'محاكاة ببيانات خيالية. اللعبة ما بتطلب موقعك ولا ملفاتك. تقدّمك بينحفظ بهالمتصفح.' : 'A simulation with fictional data. The game does not ask for your location or files. Progress is saved in this browser.'} <a href={`/${locale}/privacy/`}>{ar ? 'كيف بنحفظ تقدّمك؟' : 'How is progress stored?'}</a></p></div>
     </section>
     {open && <GameBoundary close={close} locale={locale}><ExposedGame locale={locale} onClose={close} /></GameBoundary>}
   </>;

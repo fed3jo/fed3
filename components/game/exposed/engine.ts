@@ -4,7 +4,7 @@ import { GameAudio } from './audio';
 import { checkpoints, START, SAVE_KEY, nearbyStation, inside, segmentBlocked, observe, streetRoute, type Choices, type DroneKnowledge, type SavedRun, type Point } from '@/lib/fed3/exposed';
 
 export type Mode = 'intro' | 'playing' | 'paused' | 'decision' | 'caught' | 'won';
-export type Snapshot = { mode: Mode; stage: number; health: number; stamina: number; cooldown: number; seconds: number; choices: Choices; distance: number; near: boolean; station: number | null; sensitivity: number; alert: 'clear' | 'search' | 'visual' | 'location'; message: string; x: number; z: number; pulses: number; ready: boolean; fps: number; quality: string; save: boolean };
+export type Snapshot = { mode: Mode; stage: number; health: number; stamina: number; cooldown: number; seconds: number; choices: Choices; distance: number; near: boolean; station: number | null; sensitivity: number; lookLocked: boolean; yaw: number; alert: 'clear' | 'search' | 'visual' | 'location'; message: string; x: number; z: number; pulses: number; ready: boolean; fps: number; quality: string; save: boolean };
 export type Controls = { x: number; y: number; sprint: boolean; jump: boolean; crouch: boolean };
 type Drone = { mesh: THREE.Group; home: THREE.Vector3; knowledge: DroneKnowledge; stunned: number; fire: number; lock: number };
 export class ExposedEngine {
@@ -13,7 +13,7 @@ export class ExposedEngine {
   renderer: THREE.WebGLRenderer;
   city: City;
   controls: Controls = { x: 0, y: 0, sprint: false, jump: false, crouch: false };
-  state: Snapshot = { mode: 'intro', stage: 0, health: 100, stamina: 100, cooldown: 0, seconds: 0, choices: { navigation: false, contacts: false, cloud: false }, distance: 0, near: false, station: null, sensitivity: .7, alert: 'clear', message: '', x: START.x, z: START.z, pulses: 0, ready: false, fps: 60, quality: 'auto', save: true };
+  state: Snapshot = { mode: 'intro', stage: 0, health: 100, stamina: 100, cooldown: 0, seconds: 0, choices: { navigation: false, contacts: false, cloud: false }, distance: 0, near: false, station: null, sensitivity: .7, lookLocked: false, yaw: 0, alert: 'clear', message: '', x: START.x, z: START.z, pulses: 0, ready: false, fps: 60, quality: 'auto', save: true };
   position = new THREE.Vector3(START.x, 0, START.z);
   yaw = 0; pitch = 0;
   private mobile: boolean;
@@ -25,7 +25,9 @@ export class ExposedEngine {
   private audio = new GameAudio(); private calm = false;
   private disposed = false; private low = false; private resizeObserver: ResizeObserver;
   private pointer: { id: number; x: number; y: number } | null = null;
-  private wasLocked = false; private removers: (() => void)[] = [];
+  private wantsMouseLock = false; private lockPending = false; private expectedUnlock = false; private restoreAfterUnlock = false;
+  private unlockedAt = -Infinity;
+  private removers: (() => void)[] = [];
   private pulse: THREE.Mesh; private flash: THREE.PointLight;
   private route: THREE.InstancedMesh;
   constructor(private host: HTMLElement, private minimap: HTMLCanvasElement, private emit: (s: Snapshot) => void, private ar: boolean, private fail: (reason: string) => void) {
@@ -70,27 +72,56 @@ export class ExposedEngine {
     this.listen(canvas, 'contextmenu', e => e.preventDefault());
     this.listen(canvas, 'pointerdown', ((e: PointerEvent) => {
       if (this.state.mode !== 'playing') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       if (this.pointer && this.pointer.id !== e.pointerId) return;
       e.preventDefault();
       if (document.pointerLockElement === canvas) { this.shoot(); return; }
+      if (e.pointerType === 'mouse') { this.wantsMouseLock = true; this.requestMouseLock(); return; }
       this.pointer = { id: e.pointerId, x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId);
-      if (e.pointerType === 'mouse' && !this.mobile && canvas.requestPointerLock) {
-        try { const p = canvas.requestPointerLock(); if (p) void p.catch(() => undefined); } catch { /* Drag remains available. */ }
-      }
     }) as EventListener);
     this.listen(canvas, 'pointermove', ((e: PointerEvent) => {
       if (this.state.mode !== 'playing') return;
-      if (document.pointerLockElement === canvas) this.look(e.movementX, e.movementY);
+      if (document.pointerLockElement === canvas) return;
+      if (e.pointerType === 'mouse' && this.wantsMouseLock) this.look(e.movementX, e.movementY);
       else if (this.pointer?.id === e.pointerId) { this.look(e.clientX - this.pointer.x, e.clientY - this.pointer.y, e.pointerType === 'touch'); this.pointer.x = e.clientX; this.pointer.y = e.clientY; }
     }) as EventListener);
+    this.listen(document, 'mousemove', ((e: MouseEvent) => { if (this.state.mode === 'playing' && document.pointerLockElement === canvas) this.look(e.movementX, e.movementY); }) as EventListener);
     const end = ((e: PointerEvent) => { if (this.pointer?.id === e.pointerId) this.pointer = null; }) as EventListener;
     this.listen(canvas, 'pointerup', end); this.listen(canvas, 'pointercancel', end); this.listen(canvas, 'lostpointercapture', end);
-    this.listen(document, 'pointerlockchange', (() => { const locked = document.pointerLockElement === canvas; if (this.wasLocked && !locked && this.state.mode === 'playing') this.pause(); this.wasLocked = locked; }) as EventListener);
+    this.listen(document, 'pointerlockchange', (() => {
+      if (this.disposed) return;
+      const locked = document.pointerLockElement === canvas, wasLocked = this.state.lookLocked;
+      this.state.lookLocked = locked; this.lockPending = false;
+      if (locked) {
+        this.pointer = null;
+        if (this.state.mode !== 'playing') { this.release(); return; }
+      } else {
+        const expected = this.expectedUnlock; this.expectedUnlock = false;
+        if (wasLocked && !expected && this.state.mode === 'playing') { this.unlockedAt = performance.now(); this.pause(); }
+        if (this.restoreAfterUnlock && this.state.mode === 'playing') { this.restoreAfterUnlock = false; this.requestMouseLock(); }
+      }
+      this.emitState();
+    }) as EventListener);
+    this.listen(document, 'pointerlockerror', (() => { this.lockPending = false; }) as EventListener);
     this.listen(canvas, 'webglcontextlost', e => { e.preventDefault(); this.pause(); this.fail(this.ar ? 'توقف العرض ثلاثي الأبعاد. أعد فتح اللعبة لاستعادة المرحلة المحفوظة.' : 'The 3D display stopped. Reopen the game to resume your checkpoint.'); });
   }
   private look(dx: number, dy: number, touch = false) {
     const scale = this.state.sensitivity * (touch ? 1.25 : 1);
-    this.yaw -= dx * .003 * scale; this.pitch = THREE.MathUtils.clamp(this.pitch - dy * .0025 * scale, -1.1, 1.1);
+    this.yaw -= dx * .003 * scale; this.pitch = THREE.MathUtils.clamp(this.pitch - dy * .0025 * scale, -1.1, 1.1); this.state.yaw = this.yaw;
+  }
+  private requestMouseLock() {
+    const canvas = this.renderer.domElement;
+    if (this.disposed || !this.wantsMouseLock || this.state.mode !== 'playing' || this.lockPending) return;
+    if (this.expectedUnlock) { this.restoreAfterUnlock = true; return; }
+    if (document.pointerLockElement === canvas || !canvas.requestPointerLock) return;
+    this.lockPending = true;
+    try {
+      const request = canvas.requestPointerLock();
+      if (request) void request.then(() => {
+        this.lockPending = false;
+        if ((this.disposed || this.state.mode !== 'playing') && document.pointerLockElement === canvas) this.release();
+      }, () => { this.lockPending = false; });
+    } catch { this.lockPending = false; }
   }
   setSensitivity(value: number) { if (Number.isFinite(value)) { this.state.sensitivity = THREE.MathUtils.clamp(value, .3, 1.5); this.emitState(); } }
   private updateStation() {
@@ -102,15 +133,27 @@ export class ExposedEngine {
   private emitState() { this.emit({ ...this.state, choices: { ...this.state.choices } }); }
   private message(ar: string, en: string, seconds = 4) { this.state.message = this.ar ? ar : en; this.messageTime = seconds; }
   private resetInput() { this.keys.clear(); this.controls = { x: 0, y: 0, jump: false, sprint: false, crouch: false }; this.pointer = null; }
-  private release() { if (document.pointerLockElement === this.renderer.domElement) document.exitPointerLock(); this.resetInput(); }
+  private release() {
+    this.restoreAfterUnlock = false;
+    if (document.pointerLockElement === this.renderer.domElement) { this.expectedUnlock = true; document.exitPointerLock(); }
+    this.resetInput();
+  }
   start(saved?: SavedRun | null) {
     this.resetInput(); this.state = { ...this.state, mode: 'playing', stage: saved?.stage ?? 0, health: 100, stamina: 100, cooldown: 0, seconds: saved?.seconds ?? 0, pulses: saved?.pulses ?? 0, choices: saved ? { ...saved.choices } : { navigation: false, contacts: false, cloud: false }, message: '', alert: 'clear' };
     const spawn = saved && saved.stage > 0 ? checkpoints[saved.stage - 1] : START;
     this.position.set(spawn.x, 0, spawn.z + (saved && saved.stage > 0 ? 4 : 0)); this.yaw = 0; this.pitch = 0; this.jumpVelocity = 0; this.grounded = true; this.ping = 0;
-    this.updateStation(); this.audio.setActive(true); this.resetDrones(); this.message('وصل الملفات للمقرّ. اتبع اللافتات والضوء البرتقالي.', 'Deliver the files. Follow the street signs and orange beacon.', 6); this.save(); this.emitState();
+    this.state.yaw = 0; this.requestMouseLock(); this.updateStation(); this.audio.setActive(true); this.resetDrones(); this.message('وصل الملفات للمقرّ. اتبع اللافتات والضوء البرتقالي.', 'Deliver the files. Follow the street signs and orange beacon.', 6); this.save(); this.emitState();
   }
   pause() { if (this.state.mode !== 'playing') return; this.state.mode = 'paused'; this.audio.setActive(false); this.release(); this.save(); this.emitState(); }
-  resume() { if (this.state.mode !== 'paused') return; this.state.mode = 'playing'; this.audio.setActive(true); this.last = 0; this.resetInput(); this.emitState(); }
+  escapePause() {
+    if (this.state.mode === 'playing') this.pause();
+    else if (this.state.mode === 'paused' && performance.now() - this.unlockedAt > 200) this.resume();
+  }
+  resume() { if (this.state.mode !== 'paused') return; this.state.mode = 'playing'; this.audio.setActive(true); this.last = 0; this.resetInput(); this.requestMouseLock(); this.emitState(); }
+  closeStation() {
+    if (this.state.mode !== 'decision') return;
+    this.state.mode = 'playing'; this.resetInput(); this.audio.setActive(true); this.requestMouseLock(); this.emitState();
+  }
   choose(accept: boolean) {
     const station = this.state.station;
     if (this.state.mode !== 'decision' || station === null || station > 2) return;
@@ -119,7 +162,7 @@ export class ExposedEngine {
     if (decision === 'navigation') this.message(accept ? 'نكسا: مشاركة الموقع نشطة. الدرونات تستقبل موقعك.' : 'الخريطة المحلية جاهزة. اتبع اللوحات والبوصلة.', accept ? 'NEXA: location sharing active. Drones receive your position.' : 'Offline map ready. Follow signs and your compass.', 6);
     if (decision === 'contacts') this.message(accept ? 'انتقلت جهات اتصال الفريق. أُضيفت دورية جديدة.' : 'فتحت البوابة برمز الفريق. جهات الاتصال بقيت معك.', accept ? 'Team contacts shared. An extra patrol has been dispatched.' : 'Gate opened with the team code. Contacts stayed with you.', 6);
     if (decision === 'cloud') this.message(accept ? 'الملفات على حساب نكسا فقط. حملك أخفّ، ووصولك مرتبط بالحساب.' : 'النسخة المحلية معك. رح توصلها بنفسك.', accept ? 'Files are only on your NEXA account. Less weight, but access depends on that account.' : 'Your local copy is secure in the bag. Deliver it yourself.', 6);
-    this.updateStation(); this.audio.setActive(true); this.audio.cue('station'); this.save(); this.emitState();
+    this.updateStation(); this.audio.setActive(true); this.audio.cue('station'); this.requestMouseLock(); this.save(); this.emitState();
   }
   interact() {
     if (this.state.mode !== 'playing') return;
@@ -133,7 +176,7 @@ export class ExposedEngine {
   recoverFiles() {
     if (this.state.mode !== 'won' || !this.state.choices.cloud) return;
     const station = checkpoints[2]; this.position.set(station.x, 0, station.z + 2.5);
-    this.yaw = 0; this.pitch = 0; this.jumpVelocity = 0; this.grounded = true; this.resetInput();
+    this.yaw = 0; this.state.yaw = 0; this.pitch = 0; this.jumpVelocity = 0; this.grounded = true; this.resetInput();
     this.state.mode = 'decision'; this.state.health = 100; this.state.stamina = 100;
     this.state.x = this.position.x; this.state.z = this.position.z;
     this.updateStation(); this.positionCamera(0); this.resetDrones(); this.save(); this.emitState();
@@ -159,6 +202,8 @@ export class ExposedEngine {
     this.message(hits ? 'تعطّلت الدرون مؤقتًا. استغلّ الوقت وغيّر مكانك.' : 'النبضة بتعطّل القريب منك. وجّه التصويب نحو الدرون الأبعد.', hits ? 'Drone disabled temporarily. Move while you can.' : 'EMP disables nearby drones. Aim at drones farther away.', 2.5); this.emitState();
   }
   setSound(enabled: boolean) { return this.audio.setEnabled(enabled); }
+  briefingTick() { if (this.state.mode === 'intro') this.audio.cue('type'); }
+  stopBriefing() { if (this.state.mode === 'intro') this.audio.setActive(false); }
   setVolume(volume: number) { this.audio.setVolume(volume); }
   setCalm(enabled: boolean) { this.calm = enabled; }
   setQuality(value: string) { this.state.quality = value; this.low = value === 'low' || (value === 'auto' && this.mobile); this.applyQuality(); this.emitState(); }

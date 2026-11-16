@@ -390,3 +390,91 @@ test('look sensitivity changes touch turning while leaving movement available', 
     expect(errors).toEqual([]);
   } finally { await context.close(); }
 });
+
+test('briefing writes progressively with sound, visual examples and an immediate skip', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    Object.assign(window, { typingSounds: 0 });
+    const start = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (time) {
+      (window as unknown as { typingSounds: number }).typingSounds++;
+      start.call(this, time);
+    };
+  });
+  await launch(page);
+  await page.locator('[data-start]').click();
+  const briefing = page.locator('[data-briefing]');
+  await expect(briefing).toHaveAttribute('data-typing', 'true');
+  await expect(briefing.locator('[data-visual]')).toHaveCount(3);
+  await expect.poll(() => page.evaluate(() => (window as unknown as { typingSounds: number }).typingSounds)).toBeGreaterThan(0);
+  await expect.poll(async () => (await briefing.locator('strong').allTextContents()).join('').length).toBeGreaterThan(5);
+  await page.locator('[data-briefing-reveal]').click();
+  await expect(briefing).toHaveAttribute('data-typing', 'false');
+  await expect(briefing).toContainText('بتعطّل الدرون مؤقتًا حتى تهرب.');
+  await page.keyboard.press('Escape');
+  await expect(briefing).toHaveCount(0);
+  await page.locator('[data-start]').click();
+  await expect(briefing).toHaveAttribute('data-typing', 'true');
+  await page.locator('[data-briefing-start]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  await close(page);
+});
+
+test('desktop mouse restores after stations and pauses with one click', async ({ page }) => {
+  const errors = pageErrors(page);
+  await seed(page, { version: 1, stage: 3, choices: { navigation: false, contacts: false, cloud: true }, seconds: 30, pulses: 0 });
+  await launch(page); await start(page);
+  await page.keyboard.down('KeyW');
+  await expect(page.locator('[data-interact]')).toBeVisible();
+  await page.keyboard.up('KeyW');
+  await page.locator('[data-world] canvas').click({ position: { x: 600, y: 400 } });
+  const locked = () => page.evaluate(() => document.pointerLockElement?.tagName === 'CANVAS');
+  await expect.poll(locked).toBe(true);
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press('KeyP');
+    await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+    await expect.poll(locked).toBe(false);
+    await page.locator('[data-resume]').click();
+    await expect.poll(locked).toBe(true);
+    const before = Number(await game(page).getAttribute('data-yaw'));
+    await page.mouse.move(620 + i * 15, 410 + i * 5);
+    await expect.poll(async () => Math.abs(Number(await game(page).getAttribute('data-yaw')) - before)).toBeGreaterThan(.005);
+    await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  }
+  await page.keyboard.press('Enter');
+  await expect(game(page)).toHaveAttribute('data-mode', 'decision');
+  await expect.poll(locked).toBe(false);
+  await page.keyboard.press('Escape');
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  await expect.poll(locked).toBe(true);
+  await page.keyboard.press('Enter');
+  await expect(game(page)).toHaveAttribute('data-mode', 'decision');
+  await page.locator('[data-choice=private]').click();
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  await expect.poll(locked).toBe(true);
+  await expect(page.locator('[data-game-inventory]')).toHaveAttribute('data-cloud', 'false');
+  await page.evaluate(() => {
+    document.addEventListener('pointerlockchange', () => {
+      if (!document.pointerLockElement) document.querySelector('[data-world] canvas')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }));
+    }, { once: true });
+    document.exitPointerLock();
+  });
+  await expect(game(page)).toHaveAttribute('data-mode', 'paused');
+  await close(page);
+  expect(errors).toEqual([]);
+});
+
+test('a rejected mouse lock keeps camera turning after the first click', async ({ page }) => {
+  await page.addInitScript(() => {
+    HTMLCanvasElement.prototype.requestPointerLock = () => Promise.reject(new DOMException('Unavailable', 'NotSupportedError'));
+  });
+  const errors = pageErrors(page);
+  await launch(page); await start(page);
+  await page.locator('[data-world] canvas').click({ position: { x: 600, y: 400 } });
+  const before = Number(await game(page).getAttribute('data-yaw'));
+  await page.mouse.move(670, 420);
+  await expect.poll(async () => Math.abs(Number(await game(page).getAttribute('data-yaw')) - before)).toBeGreaterThan(.05);
+  await expect(game(page)).toHaveAttribute('data-mode', 'playing');
+  await close(page);
+  expect(errors).toEqual([]);
+});

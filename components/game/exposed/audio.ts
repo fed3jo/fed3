@@ -11,6 +11,7 @@ export class GameAudio {
   private beat = 0;
   private stepDistance = 0;
   private volume = .45;
+  private lastType = 0;
 
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
@@ -89,9 +90,13 @@ export class GameAudio {
     if (this.stepDistance > 1.65) { this.stepDistance %= 1.65; this.hiss(.065, now, .055, .55); this.note(100, .05, now, .065, 'sine', 55); }
   }
 
-  cue(kind: 'pulse' | 'hit' | 'jump' | 'station' | 'win' | 'caught') {
+  cue(kind: 'pulse' | 'hit' | 'jump' | 'station' | 'win' | 'caught' | 'type') {
     if (!this.enabled || !this.context) return;
     const now = this.context.currentTime;
+    if (kind === 'type') {
+      if (this.context.state !== 'running' || now - this.lastType < .045) return;
+      this.lastType = now; this.note(650 + Math.random() * 240, .035, now, .025, 'triangle'); return;
+    }
     if (kind === 'pulse') { this.hiss(.18, now, .18); this.note(680, .23, now, .32, 'sawtooth', 55); }
     if (kind === 'hit' || kind === 'caught') { this.hiss(.15, now, .12); this.note(110, .2, now, kind === 'caught' ? .6 : .16, 'triangle', 38); }
     if (kind === 'jump') this.note(150, .07, now, .12, 'sine', 280);

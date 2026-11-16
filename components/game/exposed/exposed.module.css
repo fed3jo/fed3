@@ -9,6 +9,37 @@
 .briefingText{font-size:14px;line-height:2.05;color:#ecf1f2;margin:0}
 .briefingText strong{font-weight:700}
 .briefingText mark{background:#f28a3b26;color:#ffd09c;padding:2px 4px;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.briefingRow{display:grid;grid-template-columns:126px minmax(0,1fr);gap:18px;align-items:center;direction:ltr;min-height:76px}
+.briefingRow .briefingText{direction:inherit;text-align:start}
+.game[dir=rtl] .briefingRow .briefingText{direction:rtl}
+.briefingRow[data-revealed=false] .missionVisual{opacity:.3}
+.missionVisual{display:block;width:100%;height:auto;max-height:140px;overflow:visible}
+.routePacket{animation:packetTravel 2.8s linear infinite}
+.pulseWave{animation:pulseSignal 1.5s ease-out infinite}
+.scanCone{animation:scannerFade 2.5s ease-in-out infinite}
+@keyframes packetTravel{0%{transform:translateX(0);opacity:0}15%,80%{opacity:1}100%{transform:translateX(105px);opacity:0}}
+@keyframes pulseSignal{0%{opacity:.15}45%{opacity:1}100%{opacity:.05}}
+@keyframes scannerFade{0%,100%{opacity:.4}50%{opacity:1}}
+.typingCursor{display:inline-block;vertical-align:middle;height:1em;width:2px;background:#ffad6d;margin-inline-start:3px;animation:scannerFade .7s steps(2) infinite}
+.briefingFooter{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.game .revealText{background:none;border:0;color:#aec2cf;font-size:12px;padding:10px}
+.stationPanel{max-width:550px}
+.stationHeading{display:flex;align-items:center;justify-content:space-between;color:#f3aa74;font:11px monospace;letter-spacing:.12em}
+.stationHeading button{display:grid;place-items:center;width:36px;height:36px;border:1px solid #c2d5dc44;background:#102b3a;color:#eee7d9;border-radius:5px}
+.stationPanel>.missionVisual{height:115px;margin:4px 0 14px;border-bottom:1px solid #b5c7d224}
+.stationPanel h2{font-size:26px;margin-bottom:8px}
+.stationPanel>p{margin-bottom:17px!important}
+.stationPanel .choices button{min-height:70px}
+.stationPanel .choices button[data-choice=private]{border-color:#a8d9b870}
+.stationPanel .choices button[data-choice=private]>svg{color:#b7ded5}
+.codeForm p{font-size:11px;color:#ffc49f;margin:10px 0 0}
+.codeForm input[aria-invalid=true]{border-color:#fa9b78}
+.inventory{position:absolute;inset-inline-start:28px;top:277px;display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #a8d9b84d;background:#0a2039b5;border-radius:4px;color:#b7ded5;font-size:10px;pointer-events:none}
+.inventory svg{width:16px;height:16px}
+.inventory[data-cloud=true]{color:#ffbd85;border-color:#f28a3b66}
+@media(max-width:760px){.briefingRow{grid-template-columns:90px minmax(0,1fr);gap:10px;min-height:80px}.briefingText{font-size:12px!important}.inventory{top:204px;inset-inline-start:16px;font-size:8px}.stationPanel{padding:20px}.stationPanel>.missionVisual{height:100px}.stationPanel h2{font-size:23px}.stationPanel .choices button{min-height:63px}}
+@media(max-height:560px) and (min-width:480px){.briefingRow{min-height:54px;grid-template-columns:105px minmax(0,1fr)}.briefingBody{gap:8px!important}.stationPanel>.missionVisual{height:70px;margin-bottom:6px}.stationPanel h2{font-size:21px}.stationPanel .choices{grid-template-columns:1fr 1fr}.stationPanel .choices button{min-width:0;min-height:65px;padding:9px}.inventory{top:165px;inset-inline-start:20px;font-size:8px}}
+@media(prefers-reduced-motion:reduce){.missionVisual *,.typingCursor{animation:none!important}}
 .game .briefingStart{align-self:flex-start;min-height:44px;padding:10px 20px;border:1px solid #f6a66a;border-radius:4px;background:#f28a3b;color:#10243a;font-size:14px;font-weight:600}
 .briefingStart:hover{background:#ffac6b}
 .game[data-mode=playing] button{touch-action:none;user-select:none;-webkit-user-select:none}

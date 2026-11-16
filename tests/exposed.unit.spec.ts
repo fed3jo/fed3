@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { checkpoints, START, inside, nearbyStation, observe, readRun, segmentBlocked, streetRoute, type Bounds, type DroneKnowledge, type SavedRun } from '../lib/fed3/exposed';
+import { checkpoints, START, inside, nearbyStation, normalizeTeamCode, observe, readRun, segmentBlocked, streetRoute, type Bounds, type DroneKnowledge, type SavedRun } from '../lib/fed3/exposed';
 
 const wall: Bounds = { x: 0, z: 0, w: 4, d: 2, height: 3 };
 const emptyKnowledge = (): DroneKnowledge => ({ last: null, age: 0, source: null });
 const validRun = (): SavedRun => ({ version: 1, stage: 3, choices: { navigation: true, contacts: true, cloud: true }, seconds: 123.5, pulses: 4 });
+
+test('gate codes accept Arabic and Persian digits and limit pasted input', () => {
+  expect(normalizeTeamCode('١٤٠٧')).toBe('1407');
+  expect(normalizeTeamCode('۱۴۰۷')).toBe('1407');
+  expect(normalizeTeamCode('رمز: 1 ٤ ۰ 7 99')).toBe('1407');
+  expect(normalizeTeamCode('0000')).toBe('0000');
+});
 
 test('files can be collected again after transfer without unlocking future stations', () => {
   expect(nearbyStation(3, { x: -12, z: -81 })).toBe(2);
