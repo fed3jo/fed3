@@ -1,4 +1,5 @@
 'use client';
+import { DownloadLink } from '@/components/engagement/DownloadLink';
 import { useCatalog } from './CatalogContext';
 
 import Link from 'next/link';
@@ -254,7 +255,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                   </button>
 
                   <p className={styles.downloadNote}>{appStart[app.id].note[locale]}</p><div className={styles.links}>
-                    <a
+                    <DownloadLink appId={app.id}
                       href={app.download}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -263,7 +264,7 @@ export function AlternativeShowcase({ locale, items, selectedId, onSelect, onCom
                     >
                       <DownloadIcon />
                       {appStart[app.id].downloadLabel[locale]}
-                    </a>
+                    </DownloadLink>
                     <Link
                       href={`/${locale}/apps/${app.id}/`}
                       aria-label={`${ar ? 'صفحة التطبيق' : 'App details'}: ${app.name}`}

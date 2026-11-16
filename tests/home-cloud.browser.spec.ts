@@ -44,33 +44,35 @@ test('local cloud has its own navigation, working access diagram and sourced set
   }
 });
 
-test('all 13 survey questions can be previewed, preserve local answers and never submit or save', async ({ page }) => {
+test('published survey validates required answers, sends once with consent and does not save a local draft', async ({ page }) => {
+  test.skip(process.env.CMS_TEST_FIXTURE!=='1','Requires the local engagement fixture, never production.');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/ar/home-cloud/#cloud-readiness');
-  const requests: string[] = [];
-  page.on('request', request => { if (request.method() !== 'GET') requests.push(request.url()); });
-  const survey = page.locator('[data-readiness-survey]');
-  await expect(survey.locator('[data-survey-question]')).toHaveCount(5);
-  await survey.getByRole('textbox', { name: 'ما هو اسم المنشأة؟', exact: true }).fill('معاينة الاختبار');
-  await survey.getByRole('radio', { name: 'أخرى', exact: true }).check();
-  await survey.getByRole('textbox', { name: 'وضّح الإجابة الأخرى' }).fill('معاينة فقط');
-  await survey.getByRole('button', { name: 'القسم التالي' }).click();
-  await expect(survey.locator('[data-survey-question]')).toHaveCount(4);
-  await survey.getByRole('checkbox', { name: 'مشاركة الملفات والمستندات بأمان بين الموظفين', exact: true }).check();
-  await survey.getByRole('checkbox', { name: 'حماية خصوصية بيانات الطلاب / الموظفين', exact: true }).check();
-  await page.screenshot({ path: 'test-results/cloud-survey-desktop.png' });
-  await survey.getByRole('button', { name: 'القسم التالي' }).click();
-  await expect(survey.locator('[data-survey-question]')).toHaveCount(4);
-  await expect(survey.getByRole('button', { name: 'الإرسال غير متاح بالمعاينة', exact: true })).toBeDisabled();
-  await expect(survey.locator('form')).not.toHaveAttribute('action', /.+/);
-  await survey.getByRole('button', { name: 'عن المؤسسة', exact: true }).click();
-  await expect(survey.getByRole('textbox', { name: 'ما هو اسم المنشأة؟', exact: true })).toHaveValue('معاينة الاختبار');
-  await expect(survey.getByRole('textbox', { name: 'وضّح الإجابة الأخرى' })).toHaveValue('معاينة فقط');
-  await page.reload();
-  await expect(survey.getByRole('textbox', { name: 'ما هو اسم المنشأة؟', exact: true })).toHaveValue('');
-  expect(requests).toEqual([]);
-  const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
-  expect(storage).not.toContain('معاينة الاختبار');
+  const survey=page.locator('[data-readiness-survey]');
+  await expect(survey.locator('[data-survey-question]')).toHaveCount(6);
+  await survey.getByRole('button',{name:'القسم التالي',exact:true}).click();
+  await expect(survey.getByRole('alert')).toContainText('ما هو اسم المنشأة');
+  await survey.getByRole('textbox',{name:'ما هو اسم المنشأة؟',exact:true}).fill('اختبار محلي للفورم');
+  await survey.getByRole('radio',{name:'جمعية',exact:true}).check();
+  await survey.getByRole('textbox',{name:'رقم التواصل / البريد الإلكتروني للمنشأة',exact:true}).fill('team@example.test');
+  await survey.getByRole('textbox',{name:'المسمى الوظيفي واسم الشخص المسؤول عن التنسيق مع المبادرة',exact:true}).fill('مسؤول تجريبي');
+  await survey.getByRole('textbox',{name:'رقم ووسيلة التواصل مع مسؤول التنسيق',exact:true}).fill('coordinator@example.test');
+  await survey.getByRole('button',{name:'القسم التالي',exact:true}).click();
+  await survey.getByRole('radio',{name:/توجد شبكة محلية/}).check();
+  await survey.getByRole('radio',{name:/نعم، يتوفر جهاز سليم/}).check();
+  await survey.getByRole('radio',{name:'أقل من 10 مستخدمين',exact:true}).check();
+  await survey.getByRole('checkbox',{name:'مشاركة الملفات والمستندات بأمان بين الموظفين',exact:true}).check();
+  await survey.getByRole('button',{name:'القسم التالي',exact:true}).click();
+  await expect(survey.getByRole('alert')).toHaveCount(0);
+  await survey.getByRole('radio',{name:/^نعم \(/}).check();
+  await survey.getByRole('radio',{name:'نرغب بتدريب شخص أو شخصين فقط',exact:true}).check();
+  await survey.getByRole('radio',{name:/نعم، موافقون وجاهزون/}).check();
+  await survey.getByRole('checkbox',{name:/أوافق على إرسال/}).check();
+  const request=page.waitForResponse(r=>r.url().includes('/api/engagement/form/submit/')&&r.request().method()==='POST');
+  await survey.getByRole('button',{name:'إرسال الإجابات',exact:true}).click();
+  expect((await request).status()).toBe(200);
+  await expect(page.locator('[data-survey-success]')).toContainText('100%');
+  expect(await page.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}))).not.toContain('اختبار محلي للفورم');
 });
 
 test('mobile cloud, app facts and clustered app logos stay contained in both languages', async ({ page }) => {
@@ -97,7 +99,7 @@ test('mobile cloud, app facts and clustered app logos stay contained in both lan
       await page.locator('#cloud-navigation a[href="#cloud-readiness"]').click();
       await expect(menu).toHaveAttribute('aria-expanded', 'false');
       await expect(page.locator('#cloud-readiness')).toBeFocused();
-      await page.locator('[data-readiness-survey]').getByRole('button', { name: locale === 'ar' ? 'الجاهزية التقنية' : 'Technical readiness', exact: true }).click();
+      if(process.env.CMS_TEST_FIXTURE==='1')await expect(page.locator('[data-readiness-survey]')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (width === 390) await page.screenshot({ path: `test-results/cloud-survey-mobile-${locale}.png` });
       if (width === 390) {

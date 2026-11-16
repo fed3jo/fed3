@@ -1,43 +1,38 @@
 'use client';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Locale } from '@/lib/fed3/config';
-import { cloudCopy, cloudSurvey } from '@/lib/fed3/cloud';
+import { analyzeAnswers,analysisLabels,validateAnswers,type Answers,type FormDefinition,type PublicForm,type Analysis } from '@/lib/engagement/model';
 import { FeatureIcon } from '@/components/shared/FeatureIcon';
 import styles from './cloud.module.css';
 
-export function ReadinessSurvey({ locale }: { locale: Locale }) {
-  const c = cloudCopy[locale];
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const heading = useRef<HTMLHeadingElement>(null);
-  const move = (next: number) => {
-    setStep(next);
-    requestAnimationFrame(() => {
-      heading.current?.focus({ preventScroll: true });
-      heading.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
-    });
-  };
-  const update = (id: string, value: string | string[]) => setAnswers(current => ({ ...current, [id]: value }));
-  const selected = (id: string, index: number) => Array.isArray(answers[id]) ? answers[id].includes(String(index)) : answers[id] === String(index);
-  return <div className={styles.survey} data-readiness-survey>
-    <aside className={styles.surveyIntro}><span className={styles.surveySymbol}><FeatureIcon name="check" size={40} /></span><p>{c.preview}</p><h3>{locale === 'ar' ? 'نتعرّف عليكم، قبل التجهيز.' : 'Understand your team before setup.'}</h3><nav aria-label={c.preview}>{c.surveyGroups.map((name, index) => <button key={name} type="button" aria-label={name} aria-current={step === index ? 'step' : undefined} onClick={() => move(index)}><span>0{index + 1}</span>{name}</button>)}</nav><p className={styles.previewNote}><FeatureIcon name="encryption" size={18} />{c.previewNote}</p></aside>
-    <form className={styles.surveyForm} onSubmit={event => event.preventDefault()} autoComplete="off" data-survey-preview>
-      <div className={styles.surveyHeading}><div><p>{c.progress} {step + 1} {c.of} 3</p><h3 ref={heading} tabIndex={-1}>{c.surveyGroups[step]}</h3></div><span className={styles.soon}>{c.soon}</span></div>
-      <div className={styles.surveyProgress} aria-hidden="true">{[0,1,2].map(i => <span key={i} data-complete={i <= step} />)}</div>
-      {cloudSurvey[step].map((field, index) => <fieldset key={field.id} className={styles.question} data-survey-question>
-        <legend><small>{String(cloudSurvey.slice(0, step).flat().length + index + 1).padStart(2, '0')}</small>{field.label[locale]}{field.optional && <span>{c.optional}</span>}</legend>
-        {field.type === 'text' ? <input aria-label={field.label[locale]} value={String(answers[field.id] || '')} onChange={event => update(field.id, event.target.value)} maxLength={240} /> : field.type === 'textarea' ? <textarea aria-label={field.label[locale]} value={String(answers[field.id] || '')} onChange={event => update(field.id, event.target.value)} rows={4} maxLength={2000} /> : <>
-          {field.type === 'checkbox' && <p className={styles.multiHint}>{c.multi}</p>}
-          <div className={styles.options}>{field.options?.map((option, i) => <label key={i} data-selected={selected(field.id, i)}><input type={field.type} name={field.id} value={i} checked={selected(field.id, i)} onChange={() => {
-            if (field.type === 'radio') update(field.id, String(i));
-            else { const current = Array.isArray(answers[field.id]) ? answers[field.id] as string[] : []; update(field.id, current.includes(String(i)) ? current.filter(value => value !== String(i)) : [...current, String(i)]); }
-          }} /><span>{option[locale]}</span></label>)}</div>
-          {field.hasOther && selected(field.id, (field.options?.length || 1) - 1) && <input className={styles.otherInput} aria-label={locale === 'ar' ? 'وضّح الإجابة الأخرى' : 'Describe your other answer'} placeholder={locale === 'ar' ? 'وضّح إجابتك' : 'Describe your answer'} value={String(answers[`${field.id}-other`] || '')} onChange={event => update(`${field.id}-other`, event.target.value)} maxLength={500} />}
-        </>}
-      </fieldset>)}
-      <div className={styles.surveyActions}><button type="button" className={styles.back} disabled={step === 0} onClick={() => move(step - 1)}>{c.back}</button>{step < 2 ? <button type="button" className={styles.next} onClick={() => move(step + 1)}>{c.next}<span aria-hidden="true">↗</span></button> : <button type="submit" className={styles.next} disabled>{c.submit}</button>}</div>
-      <p className={styles.noSend}>{c.previewNote} <Link href={`/${locale}/privacy/`}>{locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy policy'}</Link> · <Link href={`/${locale}/contact/`}>{locale === 'ar' ? 'تواصل مع الفريق' : 'Contact the team'}</Link></p>
-    </form>
-  </div>;
+export function ReadinessSurvey({locale,preview}:{locale:Locale;preview?:FormDefinition}){
+ const ar=locale==='ar',t=(a:string,e:string)=>ar?a:e;
+ const [form,setForm]=useState<PublicForm|null>(preview?{definition:preview,version:0,token:''}:null),[loading,setLoading]=useState(!preview),[error,setError]=useState(''),[busy,setBusy]=useState(false),[step,setStep]=useState(0),[answers,setAnswers]=useState<Answers>({}),[consent,setConsent]=useState(false),[website,setWebsite]=useState(''),[result,setResult]=useState<{id:string;analysis:Analysis}|null>(null);
+ const heading=useRef<HTMLHeadingElement>(null);
+ const load=async()=>{setLoading(true);setError('');try{const r=await fetch('/api/engagement/form/',{cache:'no-store'});const data=await r.json();if(!r.ok)throw new Error(data.error);setForm(data.form);}catch{setError(t('تعذّر تحميل الاستبيان. جرّب من جديد.','The survey could not load. Please retry.'));}finally{setLoading(false);}};
+ useEffect(()=>{if(!preview)void load();},[]);
+ useEffect(()=>{if(preview)setForm({definition:preview,version:0,token:''});},[preview]);
+ const move=(next:number)=>{setStep(next);requestAnimationFrame(()=>{heading.current?.focus({preventScroll:true});heading.current?.scrollIntoView({behavior:'instant',block:'start'});});};
+ const update=(id:string,value:string|string[])=>setAnswers(a=>({...a,[id]:value}));
+ if(loading)return <p role="status">{t('جارٍ تحميل الاستبيان…','Loading survey…')}</p>;
+ if(!form)return <div className={styles.surveyForm}><p role={error?'alert':'status'}>{error||t('الاستبيان مغلق حاليًا. تابع صفحة التواصل للاستفسار.','The survey is currently closed. Visit the contact page for enquiries.')}</p>{error&&<button type="button" className={styles.next} onClick={()=>void load()}>{t('إعادة المحاولة','Retry')}</button>} <Link href={`/${locale}/contact/`}>{t('تواصل مع الفريق','Contact the team')}</Link></div>;
+ const definition=form.definition,group=definition.groups[Math.min(step,definition.groups.length-1)];
+ const fields=definition.questions.filter(q=>q.groupId===group.id);
+ const next=()=>{try{validateAnswers({...definition,questions:fields},Object.fromEntries(Object.entries(answers).filter(([key])=>fields.some(q=>q.id===key))));setError('');move(step+1);}catch(e){setError(e instanceof Error?e.message:'راجع الإجابات.');}};
+ if(result)return <section className={styles.surveyForm} role="status" data-survey-success><p>{t('وصلنا ردّكم','Your response was received')}</p><h3>{analysisLabels[result.analysis.band][locale]}</h3>{result.analysis.score!==null&&<p>{t('درجة الجاهزية الأولية:','Initial readiness score:')} {result.analysis.score}% ({result.analysis.earned} / {result.analysis.possible})</p>}<p>{t('الدرجة مجموع نقاط الاختيارات مقسوم على أعلى نقاطها الممكنة. أقل من 40٪ يحتاج تجهيزًا، ومن 40 إلى 74٪ يحتاج مراجعة، ومن 75٪ جاهزية أولية للمراجعة التقنية. هذا تحليل للإجابات، وليس تدقيقًا للجهاز أو قبولًا أو وعدًا بالتجهيز.','The score divides selected points by the maximum possible points. Below 40% needs preparation, 40–74% needs review, and 75% or higher indicates initial readiness for technical review. It is an answer-based assessment, not a device audit, acceptance or setup promise.')}</p>{result.analysis.recommendations.length>0&&<><h4>{t('جوانب تستحق المراجعة','Areas to review')}</h4><ul>{result.analysis.recommendations.map(id=><li key={id}>{definition.questions.find(q=>q.id===id)?.label[locale]}</li>)}</ul></>}<p>{t('مرجع الرد:','Response reference:')} <bdi>{result.id}</bdi></p><p>{t('احتفظ بالمرجع للاستفسار أو طلب حذف الرد عبر بريد الفريق.','Keep this reference to ask about or request deletion of your response through the team email.')}</p><Link href={`/${locale}/contact/`}>{t('تواصل مع الفريق','Contact the team')}</Link><button className={styles.next} type="button" onClick={()=>{setAnswers({});setConsent(false);setStep(0);setResult(null);void load();}}>{t('رد جديد','New response')}</button></section>;
+ return <div className={styles.survey} data-readiness-survey>
+  <aside className={styles.surveyIntro}><span className={styles.surveySymbol}><FeatureIcon name="check" size={40}/></span><p>{preview?t('معاينة المسودة بدون إرسال','Draft preview without submission'):t('استبيان الجاهزية','Readiness survey')}</p><h3>{definition.title[locale]}</h3><nav aria-label={t('أقسام الاستبيان','Survey sections')}>{definition.groups.map((g,i)=><button key={g.id} type="button" aria-current={step===i?'step':undefined} onClick={()=>i<=step?move(i):next()}><span>{i+1}</span>{g.title[locale]}</button>)}</nav><p className={styles.previewNote}><FeatureIcon name="encryption" size={18}/>{t('الردود يراجعها المدير المخوّل فقط. لا تدخل معلومات حساسة.','Only authorized managers review responses. Do not enter sensitive information.')}</p></aside>
+  <form className={styles.surveyForm} autoComplete="off" onSubmit={async e=>{e.preventDefault();if(preview)return;setError('');try{const validated=validateAnswers(definition,answers);if(!consent)throw new Error(t('وافق على إرسال البيانات أولًا.','Consent is required before submission.'));setBusy(true);const r=await fetch('/api/engagement/form/submit/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:form.token,locale,answers:validated,consent,website})});const data=await r.json();if(!r.ok)throw new Error(data.error||t('تعذّر الإرسال.','Submission failed.'));setResult(data);}catch(e){setError(e instanceof Error?e.message:'تعذّر الإرسال.');}finally{setBusy(false);}}}>
+   <p>{definition.description[locale]}</p><div className={styles.surveyHeading}><div><p>{t('القسم','Section')} {step+1} / {definition.groups.length}</p><h3 ref={heading} tabIndex={-1}>{group.title[locale]}</h3></div></div>
+   <div className={styles.surveyProgress} aria-hidden="true">{definition.groups.map((g,i)=><span key={g.id} data-complete={i<=step}/>)}</div>
+   <fieldset disabled={busy} style={{border:0,padding:0,minWidth:0}}>
+   {fields.map((q,index)=><fieldset key={q.id} className={styles.question} data-survey-question><legend><small>{index+1}</small>{q.label[locale]}<span>{q.required?t('مطلوب','Required'):t('اختياري','Optional')}</span></legend>{q.help[locale]&&<p>{q.help[locale]}</p>}{q.type==='single'||q.type==='multi'?<div className={styles.options}>{q.options.map(o=>{const selected=q.type==='multi'?Array.isArray(answers[q.id])&&answers[q.id].includes(o.id):answers[q.id]===o.id;return <label key={o.id} data-selected={selected}><input type={q.type==='multi'?'checkbox':'radio'} name={q.id} value={o.id} checked={selected} onChange={()=>{if(q.type==='single')update(q.id,o.id);else{const current=Array.isArray(answers[q.id])?answers[q.id] as string[]:[];update(q.id,current.includes(o.id)?current.filter(x=>x!==o.id):[...current,o.id]);}}}/><span>{o.label[locale]}{o.score!==null&&<small> ({o.score} / {Math.max(...q.options.map(x=>x.score??0))} {t('نقاط','points')})</small>}</span></label>;})}</div>:q.type==='textarea'?<textarea aria-label={q.label[locale]} value={String(answers[q.id]??'')} onChange={e=>update(q.id,e.target.value)} rows={4} maxLength={2000}/>:<input aria-label={q.label[locale]} type={q.type==='number'?'number':q.type==='email'?'email':'text'} min={q.type==='number'?0:undefined} max={q.type==='number'?99999999:undefined} value={String(answers[q.id]??'')} onChange={e=>update(q.id,e.target.value)} maxLength={240}/>}</fieldset>)}
+   <div aria-hidden="true" style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clipPath:'inset(50%)',whiteSpace:'nowrap'}}><label>Website<input tabIndex={-1} autoComplete="off" value={website} onChange={e=>setWebsite(e.target.value)}/></label></div>
+   {step===definition.groups.length-1&&<label className={styles.consent}><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{t('أوافق على إرسال إجاباتي وبيانات التواصل لفريق Fed3 للمراجعة والمتابعة، وحفظ التفاصيل لمدة سنة لدى Supabase في سنغافورة. تبقى مجاميع الإجابات بدون نصوص أو أسماء بعد حذف التفاصيل.','I agree to send my answers and contact details to Fed3 for review and follow-up, and retain details for one year with Supabase in Singapore. Aggregated choice counts remain without text or names after details are deleted.')} <Link href={`/${locale}/privacy/`}>{t('سياسة الخصوصية','Privacy policy')}</Link></span></label>}
+   {error&&<p role="alert" className={styles.surveyError}>{error}</p>}
+   <div className={styles.surveyActions}><button type="button" className={styles.back} disabled={step===0} onClick={()=>move(step-1)}>{t('السابق','Previous')}</button>{step<definition.groups.length-1?<button type="button" className={styles.next} onClick={event=>{event.preventDefault();next();}}>{t('القسم التالي','Next section')}</button>:<button type="submit" className={styles.next} disabled={busy||Boolean(preview)}>{busy?t('جارٍ الإرسال…','Sending…'):preview?t('الإرسال متوقف في المعاينة','Submission disabled in preview'):t('إرسال الإجابات','Send answers')}</button>}</div>
+   </fieldset><p className={styles.noSend}>{t('الإجابات تبقى بذاكرة الصفحة لحين الإرسال. نجاح الإرسال يظهر مع مرجع للرد. لا تعني المشاركة تأكيد تدريب أو خدمة.','Answers stay in page memory until submission. A successful submission displays a reference. Participation does not confirm training or a service.')}</p>
+  </form>
+ </div>;
 }

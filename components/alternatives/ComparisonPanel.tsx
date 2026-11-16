@@ -1,4 +1,5 @@
 'use client';
+import { DownloadLink } from '@/components/engagement/DownloadLink';
 import { useCatalog } from './CatalogContext';
 
 import { useRef, useState } from 'react';
@@ -65,7 +66,7 @@ export function ComparisonPanel({ locale, app, openGroup, activeCriterion, onGro
       <div className={styles.pairBar} data-comparison-pair>
         <div className={styles.pairApp}><span className={styles.logo}><AppLogo name={app.current} size={54} /></span><div><small>{ar ? 'التطبيق الحالي' : 'Current app'}</small><h3 data-app-name dir="ltr">{app.current}</h3></div></div>
         <span className={styles.versus}>{ar ? 'مقابل' : 'vs'}</span>
-        <div className={`${styles.pairApp} ${styles.alternative}`}><span className={styles.logo}><AppLogo name={app.name} size={54} /></span><div><small>{ar ? 'البديل المقترح' : 'Alternative'}</small><h3 data-app-name dir="ltr">{app.name}</h3><a data-download className={styles.quickDownload} href={app.download} target="_blank" rel="noopener noreferrer" aria-label={start.downloadLabel[locale]}><DownloadIcon />{ar ? 'تنزيل التطبيق' : 'Download app'}</a></div></div>
+        <div className={`${styles.pairApp} ${styles.alternative}`}><span className={styles.logo}><AppLogo name={app.name} size={54} /></span><div><small>{ar ? 'البديل المقترح' : 'Alternative'}</small><h3 data-app-name dir="ltr">{app.name}</h3><DownloadLink appId={app.id} data-download className={styles.quickDownload} href={app.download} target="_blank" rel="noopener noreferrer" aria-label={start.downloadLabel[locale]}><DownloadIcon />{ar ? 'تنزيل التطبيق' : 'Download app'}</DownloadLink></div></div>
       </div>
       {comparisonGroups.map(group => {
         const rows = app.rows.filter(row => (group.criteria as readonly string[]).includes(row.key));
