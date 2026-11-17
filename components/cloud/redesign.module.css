@@ -121,3 +121,9 @@
 @media(max-width:360px){.content{padding-inline:6%}.bento>article{padding:19px}.bento h3{font-size:20px}.permissionDemo{gap:7px;font-size:11px}.permissionDemo b{font-size:8px}.backupDemo{gap:9px}.backupDemo>span:not(.backupBadge){letter-spacing:1px}.specs>div{padding-inline:10px}.specs strong{font-size:22px}.heroGuide{font-size:10px}}
 @media(max-width:800px){.requirements>div:last-child>div:last-child{gap:18px;padding:22px}.requirements>div:last-child>div:last-child article{display:block;padding-inline-end:15px}.requirements>div:last-child>div:last-child h3{margin-top:10px;font-size:14px}.requirements>div:last-child>div:last-child p{font-size:10px}}
 @media(max-width:600px){.requirements>div:last-child>div:last-child{grid-template-columns:1fr;gap:0;padding:0 22px}.requirements>div:last-child>div:last-child article{display:flex;gap:15px;padding:20px 0!important;border-inline-end:0;border-bottom:1px solid #ffffff20}.requirements>div:last-child>div:last-child h3{font-size:16px;margin-top:0}.requirements>div:last-child>div:last-child p{font-size:11px}.stepsSection ol>li{padding:20px 23px}.stepsSection ol>li>div{padding-inline-start:38px}.stepsSection ol>li>div>svg{position:absolute;inset-inline-start:23px;top:23px;width:23px;height:23px}.stepsSection ol>li>span:first-child{top:27px;inset-inline-end:24px;font-size:10px}.stepsSection ol h3{padding-inline-end:25px;font-size:18px;min-height:0;line-height:1.6}.stepsSection ol>li>a{top:17px;inset-inline-end:46px}.stepsSection details{margin-top:10px}.stepsSection summary{min-height:37px}.stepsSection ol>li>div>span{font-size:10px}.helpPanel>summary{gap:12px;min-height:75px}.helpPanel>summary h2{font-size:18px}}
+
+/* Original screenshots keep their framing and product colors. */
+.bento .filesCard{grid-row:auto;grid-column:1/-1}
+.bento .filesCard>p{max-width:720px}
+.daily figure{margin-top:0}
+@media(max-width:600px){.bento .filesCard{grid-column:auto}}

@@ -1,0 +1,63 @@
+{
+  "reviewedOn": "2026-11-17",
+  "guide": "https://docs.google.com/document/d/1CqsiVg5j9hzYkPLR7GyGW_tYCFayS0zrEDtq1Sx0PC4/edit",
+  "processing": "Lossless WebP conversion, original framing retained. No UI recreation, cropping or recoloring.",
+  "assets": [
+    {
+      "name": "nextcloud-files",
+      "sourceFile": "users-files.png",
+      "width": 1280,
+      "height": 720,
+      "bytes": 36104,
+      "sourceSha256": "a62ab723b2ba7840cca802ccfdb54fdd8751f3eed412baaf397c04c5fdb2adbb"
+    },
+    {
+      "name": "nextcloud-sharing",
+      "sourceFile": "sharing_public_folder.png",
+      "width": 491,
+      "height": 549,
+      "bytes": 14148,
+      "sourceSha256": "cdc4bf8283e06354432fff7c4665979fb36d55e03f0f3768739bc46c2b644aaf"
+    },
+    {
+      "name": "nextcloud-versions",
+      "sourceFile": "files_versioning.png",
+      "width": 491,
+      "height": 447,
+      "bytes": 18430,
+      "sourceSha256": "66e416165a63285fe01546fa863529c004de8e0646473ae121181ed74ac151d8"
+    },
+    {
+      "name": "guide-lubuntu-install",
+      "sourceFile": "images/image37.png",
+      "width": 1266,
+      "height": 790,
+      "bytes": 133382,
+      "sourceSha256": "9efd8fe495ab61514ec72e5f1513e8dd148918ad5034a1e1948b28d291b7aa90"
+    },
+    {
+      "name": "guide-collabora",
+      "sourceFile": "images/image18.png",
+      "width": 1558,
+      "height": 638,
+      "bytes": 105316,
+      "sourceSha256": "4cf50be9e5103471670735715f2b619cf1f92fe5636dd987fefc9a18365e4884"
+    },
+    {
+      "name": "guide-app-updates",
+      "sourceFile": "images/image41.png",
+      "width": 1555,
+      "height": 764,
+      "bytes": 101162,
+      "sourceSha256": "6fa024b04dcb224979b277dedccc00afcaad66e7b3d3883d4710f3314f9000b6"
+    },
+    {
+      "name": "nextcloud-upload",
+      "sourceFile": "files_page-1.png",
+      "width": 1280,
+      "height": 720,
+      "bytes": 40708,
+      "sourceSha256": "a689072faebe583fb15826c216445f14548ad423db49427b1f6ffd5a9eb11158"
+    }
+  ]
+}

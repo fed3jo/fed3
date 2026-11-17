@@ -1,10 +1,10 @@
-import Image from 'next/image';
 import type { Locale } from '@/lib/fed3/config';
 import { cloudGuideCopy, homeCloudGuideUrl, snapGuideUrl } from '@/lib/fed3/cloud-guide';
 import { cloudSources } from '@/lib/fed3/cloud';
 import { FeatureIcon } from '@/components/shared/FeatureIcon';
 import styles from './guide.module.css';
 import redesign from './redesign.module.css';
+import { CloudScreenshot } from './CloudScreenshot';
 
 export function CloudRequirements({ locale }: { locale: Locale }) {
   const c = cloudGuideCopy[locale];
@@ -19,7 +19,7 @@ export function CloudDailyGuide({ locale }: { locale: Locale }) {
   const c = cloudGuideCopy[locale];
   return <section id="cloud-daily" tabIndex={-1} className={`${styles.daily} ${redesign.daily}`} aria-labelledby="cloud-daily-heading" data-cloud-daily>
     <div className={styles.sectionHead}><div><p className={styles.eyebrow}>{c.dailyKicker}</p><h2 id="cloud-daily-heading">{c.dailyTitle}</h2></div><p>{c.dailyLead}</p></div>
-    <div className={styles.dailyGrid}><div className={styles.dailyArt}><Image src="/cloud/home-cloud-daily-v1.webp" width={1448} height={1086} sizes="(max-width: 800px) 90vw, 43vw" alt={c.dailyAlt}/><a className={styles.textLink} href={cloudSources.daily} target="_blank" rel="noopener noreferrer">{c.dailyLink}<span aria-hidden="true">↗</span></a></div><div className={styles.dailySteps}>{c.daily.map(([title,body],i) => <details key={title} open={i === 0}><summary><bdi>0{i+1}</bdi><span>{title}</span><i aria-hidden="true">+</i></summary><p>{body}</p></details>)}</div></div>
+    <div className={styles.dailyGrid}><div className={styles.dailyArt}><CloudScreenshot id="upload" locale={locale}/><a className={styles.textLink} href={cloudSources.daily} target="_blank" rel="noopener noreferrer">{c.dailyLink}<span aria-hidden="true">↗</span></a></div><div className={styles.dailySteps}>{c.daily.map(([title,body],i) => <details key={title} open={i === 0}><summary><bdi>0{i+1}</bdi><span>{title}</span><i aria-hidden="true">+</i></summary><p>{body}</p></details>)}</div></div>
   </section>;
 }
 

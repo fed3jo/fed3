@@ -6,24 +6,15 @@
 
 تستخدم الافتتاحية قالب `InitiativeIntro` نفسه في الرئيسية والبدائل: هيدر مشترك، وخلفية كحلية بفاصل برتقالي، وعنوان مختصر مع تمييز العبارة المهمة. تعرض المقدمة فيديو السحابة الذي قدّمه المستخدم، مع نسخة أخف للهاتف وصورة ثابتة عند تقليل الحركة. برومبتات صورتي البداية والنهاية وحركة Google Flow في [ملف البرومبتات](home-cloud-hero-flow-prompts.md).
 
-تجمع بطاقات الفكرة الملفات والصلاحيات والنسخ في عرض بصري. تظهر الخدمات كتفاصيل قصيرة قابلة للفتح. تعرض الجاهزية أرقام التجربة، ويظهر جدول المقارنة عند فتحه. خطوات التجهيز ست بطاقات تعرض المخرج، مع تفاصيل كل خطوة عند الطلب. يجمع قسم المساعدة الأعطال الشائعة داخل جزء قابل للفتح.
+تعرض بطاقات الفكرة لقطات حقيقية لقائمة ملفات Nextcloud، وخيارات المشاركة وسجل إصدارات الملف. تعرض بطاقة الإصدارات حدود الاسترجاع وتوضّح الحاجة لنسخة احتياطية مستقلة. الصور من توثيق Nextcloud الرسمي بترخيص CC BY 3.0، مع المصدر ونسبة العمل للمساهمين أسفل كل لقطة.
+
+يعرض قسم التجهيز ثلاث صور أصلية من Home-cloud guide: بداية تثبيت Lubuntu، والبحث عن Collabora، ومتابعة تحديث التطبيقات. في قسم الاستخدام اليومي تظهر قائمة رفع الملفات الحقيقية. كل صورة قابلة للفتح بحجمها الكامل، وتُحمّل من الموقع نفسه بدون طلبات صور إلى Google أو Nextcloud عند قراءة الصفحة.
+
+الأصول المستخدمة في `public/cloud/screenshots/`، وبياناتها وأبعادها وبصمات المصدر في `manifest.json`، ونسبتها وروابط أصولها في `CREDITS.md`. حُولت إلى WebP بدون فقدان، مع الإبقاء على الإطار والألوان والتعليقات الأصلية. لم تُستخدم لقطات الملف الشخصي التي تحتوي على وسائل تواصل وتاريخ ميلاد أو صور الطرفية التي تحتوي على بيانات إعداد أو اعتماد. أرشيف الدليل المستخرج داخل `tmp/` وخارج Git.
+
+تعرض الجاهزية أرقام التجربة، ويظهر جدول المقارنة عند فتحه. خطوات التجهيز ست بطاقات تعرض المخرج، مع تفاصيل كل خطوة عند الطلب. الاستبيان القابل للإدارة يظهر عند فتح بطاقة الجاهزية، وتبقى آلية حفظ ردوده وصلاحياته كما هي. يجمع قسم المساعدة الأعطال الشائعة داخل جزء قابل للفتح.
 
 جدول العتاد ينسب أرقام 2 و4 GB RAM والتخزين إلى تجربة البداية في دليل المبادرة، ويبيّن أن الاحتياج يتغير حسب الاستخدام. يعرض قسم المسؤول مسار Linux وSnap الوارد في الدليل، مع روابط التوثيق الرسمي. لا يعرض الوصول من الخارج أو التخزين المحلي كضمان للخصوصية. وتُذكر مسؤولية الإدارة والنسخ والاستعادة والصلاحيات.
-
-استُخدمت الصورتان المرفقتان كمرجع للفكرة والأسلوب: رسم إعادة استخدام الحاسوب، وصورة الخادم البنفسجي مع الأجهزة. وُلد مشهد موحد من المرجعين بأداة ImageGen المدمجة، ثم وُلدت منه صورة استخدام يومي بنفس الأسلوب. الأصول في:
-
-- `public/cloud/home-cloud-journey-v1.png` و`public/cloud/home-cloud-journey-v1.webp`.
-- `public/cloud/home-cloud-daily-v1.png` و`public/cloud/home-cloud-daily-v1.webp`.
-
-الصور توضيحية، والنصوص والعناوين وروابط الدليل عناصر HTML مستقلة. تستخدم الصور الكحلي `#062759` والبرتقالي `#F16E00` والبنفسجي `#562474` على أرضية بيج دافئة. تُحفظ الصور الأصلية، وتُستخدم نسخ WebP المحسنة في الصفحة.
-
-## وصف توليد المشهد الموحد
-
-Use case: stylized-concept. Asset type: website hero illustration for Fed3 Home-Cloud. Use reference 1 ONLY for its narrative: repurpose an old PC, set up a local home cloud, access files from a phone or laptop away from home. Use reference 2 for its premium minimal 3D material language and purple stacked personal server, ivory laptop and phone. Create ONE coherent panoramic 3D scene connecting both references, not a collage. On the left a modest old desktop computer with a navy screen, a restrained curved orange reuse arrow leads toward a simple architectural cutaway home at the center containing a compact three-layer Crypto Purple #562474 personal server and a small navy router. Fine physical orange and navy data paths travel from that home to a modern ivory laptop and upright phone on the right, with a few small ivory document and photo tiles following the path. Objects grounded on one continuous warm Amman Stone #F2EFE9 studio floor, very clean background #F2EFE9. Digital Navy #062759 details, Action Orange #F16E00 used sparingly, no cyan. Refined photorealistic CGI product rendering, tactile matte ceramic, frosted glass, soft shadows, subtle metallic ports. A clear low horizontal silhouette with ample space around objects, generous top and bottom margins, all objects complete and visible. Equal visual quality across old PC, home, server and mobile devices. No text, no letters, no numbers, no slogans, no UI panels, no logos, no border, no watermark, no people. Landscape 16:9 composition, for an editorial educational website. Keep the scene readable at small sizes and background uncluttered.
-
-## وصف توليد الاستخدام اليومي
-
-Use case: stylized-concept. Asset type: companion illustration for the everyday-use section of the same Fed3 Home-Cloud website. Use the attached reference as the exact style reference and keep the same rounded three-layer Crypto Purple #562474 personal server, navy details, ivory devices, tactile matte materials and warm Amman Stone #F2EFE9 background. Create a close three-quarter product scene: compact purple local server slightly left of center, a modern ivory laptop with a simple navy folder symbol on its screen behind it, an upright ivory phone beside it, and five small physical matte cards arranged along a fine orange curved path in front: folder, image, document, sharing link and restore-arrow pictograms. They represent upload, share, sync and recovery. No written text, no numbers, no UI screenshots, no logo, no people. Orange #F16E00 and Digital Navy #062759 restrained accents. Soft studio daylight, realistic gentle shadows and clean continuous floor, visually consistent with reference. Objects large and clearly legible, balanced editorial negative space, no excessive floating decorative clutter. Landscape 4:3 composition suitable for a side-by-side educational guide.
 
 ## المراجع التقنية
 
