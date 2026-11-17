@@ -127,3 +127,30 @@
 .bento .filesCard>p{max-width:720px}
 .daily figure{margin-top:0}
 @media(max-width:600px){.bento .filesCard{grid-column:auto}}
+
+/* The readiness form stays visible at every viewport size. */
+.readinessPanel{padding:0;border:0;background:transparent}
+@media(max-width:600px){
+  .content{padding-inline:20px}
+  .page section[id]{scroll-margin-top:105px}
+  .sectionHead h2{font-size:30px;line-height:1.6}
+  .sectionHead>p,.bento p{font-size:14px;line-height:1.9}
+  .bento>article{padding:20px}
+  .cardHeading>span,.eyebrow{font-size:12px}
+  .capabilities summary{font-size:14px;min-height:48px}
+  .capabilities details p,.capabilities>p{font-size:13px}
+  .flowSection [role=group]{flex-wrap:wrap;border-radius:18px}
+  .flowSection [role=group]>button{min-height:44px;font-size:12px;padding-inline:8px;white-space:normal}
+  .flowSection>aside p{font-size:13px}
+  .stepsSection summary{min-height:44px;font-size:13px}
+  .stepsSection details p{font-size:14px}
+  .stepsSection ol>li>div>span{font-size:12px}
+  .stepsSection ol>li>a{width:44px;height:44px;top:10px;inset-inline-end:40px}
+  .stepsSection ol h3{padding-inline-end:48px}
+  .specs p{font-size:12px}
+  .hardwareDetails>summary{font-size:14px}
+  .requirements>div:last-child>div:last-child p{font-size:13px}
+  .heroGuide{font-size:14px;min-height:44px}
+  .readinessPanel{padding:0}
+}
+@media(max-width:360px){.content{padding-inline:16px}.bento>article{padding:18px}}
