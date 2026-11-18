@@ -5,7 +5,8 @@ import identity from '@/components/landing/identity.module.css';
 
 export function AlternativesIntro({ locale, explore, reduceMotion }: { locale: Locale; explore: () => void; reduceMotion?: boolean }) {
   const ar = locale === 'ar';
-  return <InitiativeIntro locale={locale} messages={messages[locale]} ready explore={explore} variant="alternatives" reduceMotion={reduceMotion} identity={
+  return <InitiativeIntro locale={locale} messages={messages[locale]} ready explore={explore} variant="alternatives" reduceMotion={reduceMotion}
+    secondaryAction={{ href: '#game', label: ar ? 'العب مكشوف' : 'Play Exposed' }} identity={
     <div className={identity.identity} data-alternatives-identity>
       <p className={identity.eyebrow}>{ar ? 'المحطة الأولى / اختَر أداتك' : 'STATION ONE / CHOOSE YOUR TOOLS'}</p>
       <h1 id="identity-heading">{ar

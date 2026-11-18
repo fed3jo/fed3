@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache';
 import { randomUUID, createHash } from 'node:crypto';
 import { z } from 'zod';
 import { appSchema, backupSchema, mediaSchema, publishIssues } from '@/lib/cms/model';
@@ -43,7 +44,15 @@ export async function POST(request:Request,context:Context) {
     if(path==='logout') {const auth=await authClient();await auth.auth.signOut({scope:'local'});return apiResponse({ok:true});}
     const manager=['publish','archive','unarchive','seed','restore','staff'].includes(path);
     const {db,user}=await requireStaff(manager);
-    const apply=async(action:string,body:unknown,expected:number|null=null)=>{const {data,error}=await db.rpc('cms_apply',{p_actor:user.id,p_action:action,p_body:body,p_expected:expected});if(error)throw error;return apiResponse({record:data});};
+    const apply=async(action:string,body:unknown,expected:number|null=null)=>{
+      const {data,error}=await db.rpc('cms_apply',{p_actor:user.id,p_action:action,p_body:body,p_expected:expected});
+      if(error)throw error;
+      if(['publish','archive','unarchive','seed','restore'].includes(action)) {
+        revalidatePath('/ar/alternatives');
+        revalidatePath('/en/alternatives');
+      }
+      return apiResponse({record:data});
+    };
     const raw=await readJson(request,path==='restore'?3*1024*1024:1024*1024);
     if(path==='save') {const input=parsed(z.object({document:appSchema,version:z.number().int().positive().nullable()}).strict(),raw); return apply('save',input.document,input.version);}
     if(['publish','archive','unarchive'].includes(path)) {

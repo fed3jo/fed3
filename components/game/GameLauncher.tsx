@@ -1,11 +1,24 @@
 'use client';
 
-import { Component, type ErrorInfo, type ReactNode, useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode, useEffect, useRef, useState } from 'react';
 import type { Locale } from '@/lib/fed3/config';
 import styles from './launcher.module.css';
 
-const ExposedGame = dynamic(() => import('./exposed/ExposedGame'), { ssr: false, loading: () => <div className={styles.loading} role="status"><span /><div>مكشوف / EXPOSED<small>جارٍ تجهيز المدينة · Loading the city</small></div></div> });
+const ExposedGame = lazy(() => import('./exposed/ExposedGame'));
+
+function LoadingGame({ ar, close }: { ar: boolean; close: () => void }) {
+  const modal = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = modal.current;
+    element?.showModal();
+    return () => element?.close();
+  }, []);
+  return <dialog ref={modal} className={styles.loadingDialog} aria-label={ar ? 'تحميل مكشوف' : 'Loading Exposed'}
+    onCancel={event => { event.preventDefault(); close(); }}>
+    <div className={styles.loading} role="status"><span /><div>{ar ? 'جارٍ تجهيز المدينة' : 'Loading the city'}</div></div>
+    <button type="button" onClick={close}>{ar ? 'العودة إلى البدائل' : 'Back to alternatives'}</button>
+  </dialog>;
+}
 class GameBoundary extends Component<{ children: ReactNode; close: () => void; locale: Locale }, { error: boolean }> {
   state = { error: false };
   static getDerivedStateFromError() { return { error: true }; }
@@ -58,6 +71,8 @@ export function GameLauncher({ locale }: { locale: Locale }) {
       <div className={styles.art}><CityArtwork ar={ar} /><div className={styles.artLabel}><span /><span>{ar ? 'مدينة تحت المراقبة' : 'A city under surveillance'}</span><span className={styles.coordinates}>31°57′ N / 35°56′ E</span></div></div>
       <div className={styles.copy}><p className={styles.eyebrow}><span />03 / {ar ? 'تجربة تفاعلية ثلاثية الأبعاد' : 'An interactive 3D experience'}</p><h2 id="game-heading">{ar ? 'مكشوف' : 'Exposed'}<span>.</span></h2><p className={styles.statement}>{ar ? 'المدينة بتعرف وين إنت.' : 'The city knows where you are.'}</p><p className={styles.lead}>{ar ? 'معك ملفات الفريق، وقدّامك طريق للمقر. اقطع المدينة، تجنّب الدرونات، واكتشف كيف التطبيقات اللي بتسهّل طريقك ممكن تكشفه لغيرك.' : 'You have the team’s files and a route to their headquarters. Cross the city, evade the drones, and discover how the apps guiding you can give away your route.'}</p><div className={styles.tags}><span>{ar ? 'مدينة 3D' : '3D city'}</span><span>{ar ? 'لمس + كمبيوتر' : 'Touch + desktop'}</span><span>{ar ? 'طولي أو عرضي' : 'Portrait or landscape'}</span></div><button ref={launchButton} className={styles.start} disabled={!ready} onClick={() => setOpen(true)} data-game-launch><span>{ar ? 'ادخل المدينة' : 'Enter the city'}</span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></button><p className={styles.note}>{ar ? 'محاكاة ببيانات خيالية. اللعبة ما بتطلب موقعك ولا ملفاتك. تقدّمك بينحفظ بهالمتصفح.' : 'A simulation with fictional data. The game does not ask for your location or files. Progress is saved in this browser.'} <a href={`/${locale}/privacy/`}>{ar ? 'كيف بنحفظ تقدّمك؟' : 'How is progress stored?'}</a></p></div>
     </section>
-    {open && <GameBoundary close={close} locale={locale}><ExposedGame locale={locale} onClose={close} /></GameBoundary>}
+    {open && <GameBoundary close={close} locale={locale}><Suspense fallback={<LoadingGame ar={ar} close={close} />}>
+      <ExposedGame locale={locale} onClose={close} />
+    </Suspense></GameBoundary>}
   </>;
 }

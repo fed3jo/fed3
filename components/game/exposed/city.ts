@@ -1,41 +1,63 @@
 import * as THREE from 'three';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { checkpoints, type Bounds } from '@/lib/fed3/exposed';
 
-export type City = { bounds: Bounds[]; beacons: THREE.Group[]; drones: THREE.Group[]; gun: THREE.Group; sun: THREE.DirectionalLight; ready: Promise<void>; dispose: () => void };
-export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer, mobile: boolean, ar: boolean): City {
+import { buildAmmanLandmarks } from './landmarks';
+
+export type City = { bounds: Bounds[]; beacons: THREE.Group[]; drones: THREE.Group[]; gun: THREE.Group; sun: THREE.DirectionalLight; charge: THREE.MeshBasicMaterial; dispose: () => void };
+export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, mobile: boolean, ar: boolean): City {
   const bounds: Bounds[] = [], beacons: THREE.Group[] = [], drones: THREE.Group[] = [];
   const textures: THREE.Texture[] = [], materials: THREE.Material[] = [], geometries: THREE.BufferGeometry[] = [];
-  const loader = new THREE.TextureLoader();
-  const pending: Promise<unknown>[] = [];
-  const load = (file: string, color = false, repeat = 1) => {
-    let finish: () => void;
-    const loaded = new Promise<void>(resolve => { finish = resolve; });
-    const t = loader.load(`/game/exposed/textures/${file}`, () => finish(), undefined, () => finish());
-    pending.push(loaded);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat);
-    t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-    if (color) t.colorSpace = THREE.SRGBColorSpace;
-    textures.push(t); return t;
+  let seed = 9182;
+  const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const material = (options: THREE.MeshStandardMaterialParameters) => {
+    const m = new THREE.MeshStandardMaterial(options);
+    materials.push(m);
+    return m;
   };
-  const material = (options: THREE.MeshStandardMaterialParameters) => { const m = new THREE.MeshStandardMaterial(options); materials.push(m); return m; };
-  const concreteMap = load('concrete_floor_worn_001_diff_1k.jpg', true, 2);
-  const concrete = material({ map: concreteMap, color: '#b5ae9e', roughness: .93, normalMap: mobile ? null : load('concrete_floor_worn_001_nor_gl_1k.jpg', false, 2), normalScale: new THREE.Vector2(.35, .35) });
-  const pale = material({ map: concreteMap, color: '#d5c9b4', roughness: .87 });
-  const brick = material({ map: load('brick_wall_001_diffuse_1k.jpg', true, 3), normalMap: mobile ? null : load('brick_wall_001_nor_gl_1k.jpg', false, 3), roughness: .9, color: '#b7a08b' });
-  const road = material({ map: load('asphalt_02_diff_1k.jpg', true, 21), normalMap: mobile ? null : load('asphalt_02_nor_gl_1k.jpg', false, 21), roughnessMap: load('asphalt_02_rough_1k.jpg', false, 21), color: '#7a858c', roughness: .85 });
+  const surface = (masonry: boolean) => {
+    const tile = document.createElement('canvas'); tile.width = tile.height = 128;
+    const context = tile.getContext('2d')!;
+    const dots = context.createImageData(128, 128);
+    for (let i = 0; i < dots.data.length; i += 4) {
+      const shade = (masonry ? 216 : 164) + Math.floor(rand() * (masonry ? 26 : 27));
+      dots.data[i] = dots.data[i+1] = dots.data[i+2] = shade;
+      dots.data[i+3] = 255;
+    }
+    context.putImageData(dots, 0, 0);
+    if (masonry) {
+      context.fillStyle = '#a8a09a';
+      for (let row = 0; row < 8; row++) {
+        context.fillRect(0, row * 16, 128, 1);
+        for (let x = row % 2 ? 16 : 0; x < 128; x += 32) context.fillRect(x, row * 16, 1, 16);
+      }
+    }
+    const texture = new THREE.CanvasTexture(tile);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.setScalar(masonry ? 2 : 22);
+    textures.push(texture);
+    return texture;
+  };
+  const masonry = surface(true);
+  const concrete = material({ map: masonry, color: '#d1c4ab', roughness: .95 });
+  const pale = material({ color: '#e0ccb0', roughness: .88 });
+  const brick = material({ map: masonry, color: '#b09b82', roughness: .93 });
+  const road = material({ map: surface(false), color: '#87909a', roughness: .91 });
   const navy = material({ color: '#10243b', metalness: .65, roughness: .35 });
   const metal = material({ color: '#52606c', metalness: .8, roughness: .38 });
   const rubber = material({ color: '#10171c', roughness: .95 });
   const glass = material({ color: '#2e4c60', metalness: .65, roughness: .23 });
+  const curtainWall = material({ vertexColors: true, metalness: .24, roughness: .38 });
+  const tierStone = material({ vertexColors: true, roughness: .94 });
   const lit = material({ color: '#dfc697', emissive: '#efb867', emissiveIntensity: .38, roughness: .45 });
   const orange = material({ color: '#ef791f', emissive: '#cf4a07', emissiveIntensity: .3, metalness: .3, roughness: .4 });
   const white = material({ color: '#d6d3bb', roughness: .8 });
   const red = material({ color: '#9c4139', metalness: .35, roughness: .4 });
-  const boxGeo = new THREE.BoxGeometry(1, 1, 1), cylGeo = new THREE.CylinderGeometry(1, 1, 1, 10), sphereGeo = new THREE.SphereGeometry(1, 10, 7);
+  const boxGeo = new THREE.BoxGeometry(1, 1, 1), cylGeo = new THREE.CylinderGeometry(1, 1, 1, mobile ? 12 : 18), sphereGeo = new THREE.SphereGeometry(1, 10, 7);
   const roundedGeo = new RoundedBoxGeometry(1, 1, 1, 2, .12); geometries.push(roundedGeo);
-  geometries.push(boxGeo, cylGeo, sphereGeo);
+  const landmarkCylinder = new THREE.CylinderGeometry(1, 1, 1, mobile ? 32 : 48);
+  geometries.push(boxGeo, cylGeo, sphereGeo, landmarkCylinder);
   const batches = new Map<string, { geo: THREE.BufferGeometry; mat: THREE.Material; matrices: THREE.Matrix4[] }>();
   const dummy = new THREE.Object3D();
   const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number, ry = 0, rz = 0) => {
@@ -47,20 +69,18 @@ export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, r
   const cylinder = (m: THREE.Material, x: number, y: number, z: number, r: number, h: number, ry = 0) => add(cylGeo, m, x, y, z, r, h, r, ry);
   const solid = (x: number, z: number, w: number, d: number, height: number) => bounds.push({ x, z, w, d, height });
   const sign = (text: string, sub: string, x: number, y: number, z: number, width: number, ry = 0, dark = true) => {
-    const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+    const c = document.createElement('canvas'); c.width = 512; c.height = 128;
     const ctx = c.getContext('2d')!;
-    ctx.fillStyle = dark ? '#082039' : '#d4c5a6'; ctx.fillRect(0, 0, 1024, 256);
-    ctx.fillStyle = '#f47b24'; ctx.fillRect(0, 0, 12, 256);
+    ctx.fillStyle = dark ? '#082039' : '#d4c5a6'; ctx.fillRect(0, 0, 512, 128);
+    ctx.fillStyle = '#f47b24'; ctx.fillRect(0, 0, 6, 128);
     ctx.textAlign = 'center'; ctx.direction = ar ? 'rtl' : 'ltr'; ctx.fillStyle = dark ? '#fff0d4' : '#102b44';
-    ctx.font = '600 66px "IBM Plex Arabic", sans-serif'; ctx.fillText(text, 512, 116, 950);
-    ctx.font = '26px sans-serif'; ctx.fillStyle = dark ? '#a8b7c4' : '#5b625f'; ctx.fillText(sub, 512, 190, 950);
+    ctx.font = '600 33px Plex, sans-serif'; ctx.fillText(text, 256, 58, 475);
+    ctx.font = '13px sans-serif'; ctx.fillStyle = dark ? '#a8b7c4' : '#5b625f'; ctx.fillText(sub, 256, 95, 475);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; textures.push(t);
     const m = new THREE.MeshStandardMaterial({ map: t, roughness: .6, emissiveMap: t, emissive: '#ffffff', emissiveIntensity: .16 }); materials.push(m);
     const geo = new THREE.PlaneGeometry(width, width / 4); geometries.push(geo);
     const mesh = new THREE.Mesh(geo, m); mesh.position.set(x, y, z); mesh.rotation.y = ry; scene.add(mesh);
   };
-  let seed = 9182;
-  const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
   const foliageCanvas = document.createElement('canvas'); foliageCanvas.width = foliageCanvas.height = 256;
   const foliageContext = foliageCanvas.getContext('2d')!;
   for (let i = 0; i < 1800; i++) {
@@ -79,7 +99,13 @@ export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, r
       box(pale, side * 5.95, .12, z, .22, .24, d);
     }
     for (const z of [-3, -23, -61, -101, -121, -142]) {
-      const w = 10 + rand() * 3, d = 13 + rand() * 2, h = 9 + rand() * 15, x = side * (8.4 + w / 2);
+      if (side === 1 && z === -101) continue;
+      const w = 10 + rand() * 3, d = 13 + rand() * 2;
+      const nearEntrance = z > -30;
+      const aroundTheatre = z < -115;
+      const h = nearEntrance || aroundTheatre ? 5.5 + rand() * 3 : 9 + rand() * 15;
+      const setback = z === -142 ? 20 : z === -121 ? 12.6 : nearEntrance ? 13.7 : z === -61 ? 12.6 : 8.4;
+      const x = side * (setback + w / 2);
       const face = side < 0 ? x + w / 2 + .05 : x - w / 2 - .05;
       const facade = rand() > .6 ? brick : rand() > .45 ? pale : concrete;
       box(facade, x, h / 2, z, w, h, d); solid(x, z, w, d, h);
@@ -152,12 +178,12 @@ export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, r
     const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(-9, 8, z), new THREE.Vector3(0, 6.8, z), new THREE.Vector3(9, 8, z)]);
     const geo = new THREE.TubeGeometry(curve, 14, .018, 3, false); geometries.push(geo); scene.add(new THREE.Mesh(geo, rubber));
   }
-  box(pale, 0, 6, -142, 15, 12, 12); solid(0, -142, 15, 12, 12);
-  box(navy, 0, 2.3, -135.95, 5, 4.6, .1);
-  sign(ar ? 'بياناتك. قرارك.' : 'Your data. Your decision.', 'FED3 / COMMUNITY HUB', 0, 5.7, -135.8, 10);
-  sign(ar ? 'المقرّ المجتمعي' : 'Community hub', '127 / AL MADINA', 0, 2.5, -135.8, 4);
-  sign(ar ? 'المدينة بتعرفك' : 'The city knows you', 'NEXA / CONNECTED LIVING', -8.35, 7, -23, 7, Math.PI / 2);
-  sign(ar ? 'كل شي أسهل مع نكسا' : 'Everything is easier with NEXA', 'YOUR CITY. CONNECTED.', 8.35, 8, -64, 7, -Math.PI / 2);
+  box(pale, 0, -.04, -132, 22, .18, 14);
+  box(concrete, -6.8, 1.35, -134.5, 4.2, 2.7, 2.7);
+  solid(-6.8, -134.5, 4.2, 2.7, 2.7);
+  sign(ar ? 'المقرّ المجتمعي' : 'Community hub', 'FED3', -6.8, 1.9, -133.1, 3.7);
+  sign(ar ? 'المدينة بتعرفك' : 'The city knows you', 'NEXA / CONNECTED LIVING', -13.49, 3.75, -23, 7, Math.PI / 2);
+  sign(ar ? 'كل شي أسهل مع نكسا' : 'Everything is easier with NEXA', 'YOUR CITY. CONNECTED.', 12.41, 8, -64, 7, -Math.PI / 2);
   sign(ar ? 'شارع الأرشيف' : 'Archive street', 'ARCHIVE  →  /  043', 0, 4.5, -34, 4.5);
   sign(ar ? 'محطة الملفات' : 'Transfer station', '←  TRANSFER  /  083', 0, 4.5, -74, 4.5);
   for (let i = 0; i < checkpoints.length; i++) {
@@ -199,27 +225,61 @@ export function buildCity(scene: THREE.Scene, camera: THREE.PerspectiveCamera, r
     const cone = new THREE.Mesh(coneGeo, cm); cone.position.y = -3.1; group.add(cone);
     scene.add(group); drones.push(group);
   }
+  bounds.push(...buildAmmanLandmarks({
+    box,
+    round: (m, x, y, z, w, h, d) => add(landmarkCylinder, m, x, y, z, w, h, d),
+    mesh: (geometry, surface, x = 0, y = 0, z = 0) => {
+      const model = new THREE.Mesh(geometry, surface);
+      model.position.set(x, y, z);
+      model.castShadow = true;
+      model.receiveShadow = true;
+      geometries.push(geometry);
+      scene.add(model);
+    },
+    stone: concrete, pale, glass, curtainWall, tierStone, navy, lit,
+  }));
+  // Wayfinding remains available with location sharing off.
+  sign(ar ? 'المدرّج الروماني' : 'Roman Theatre', ar ? 'ساحة المقرّ  ↑' : 'COMMUNITY SQUARE  ↑', 5.2, 1.7, -129, 3.5, -.2, false);
+  sign(ar ? 'مقرّ الحي' : 'Community hub', ar ? 'امشِ مع اللوحات  ↑' : 'FOLLOW STREET SIGNS  ↑', 6.7, 2.8, -88, 3.1, -.45, false);
   for (const batch of batches.values()) {
     const mesh = new THREE.InstancedMesh(batch.geo, batch.mat, batch.matrices.length);
     batch.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix)); mesh.castShadow = batch.mat !== white && batch.mat !== lit; mesh.receiveShadow = true; mesh.computeBoundingSphere(); scene.add(mesh);
   }
-  const sun = new THREE.DirectionalLight('#ffe0b3', 3.4); sun.position.set(-24, 35, 4); sun.castShadow = !mobile;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -32; sun.shadow.camera.right = 32; sun.shadow.camera.top = 32; sun.shadow.camera.bottom = -32; sun.shadow.camera.near = 1; sun.shadow.camera.far = 110; sun.shadow.normalBias = .045; sun.shadow.bias = -.0002;
+  const sky = document.createElement('canvas'); sky.width = 2; sky.height = 128;
+  const skyContext = sky.getContext('2d')!;
+  const skyGradient = skyContext.createLinearGradient(0, 0, 0, sky.height);
+  skyGradient.addColorStop(0, '#607f9b'); skyGradient.addColorStop(.48, '#a9bdca'); skyGradient.addColorStop(1, '#dec3a4');
+  skyContext.fillStyle = skyGradient; skyContext.fillRect(0, 0, sky.width, sky.height);
+  const skyTexture = new THREE.CanvasTexture(sky); skyTexture.colorSpace = THREE.SRGBColorSpace;
+  textures.push(skyTexture); scene.background = skyTexture;
+  const sun = new THREE.DirectionalLight('#ffdab0', 3); sun.position.set(-24, 35, 4); sun.castShadow = !mobile;
+  sun.shadow.mapSize.set(1024, 1024); sun.shadow.camera.left = -32; sun.shadow.camera.right = 32; sun.shadow.camera.top = 32; sun.shadow.camera.bottom = -32; sun.shadow.camera.near = 1; sun.shadow.camera.far = 110; sun.shadow.normalBias = .045; sun.shadow.bias = -.0002;
   scene.add(sun, sun.target); scene.add(new THREE.HemisphereLight('#c2def5', '#6e6554', 1.6));
   const sunDisk = new THREE.Mesh(new THREE.SphereGeometry(7, 16, 12), new THREE.MeshBasicMaterial({ color: '#fff0cb', fog: false })); sunDisk.position.set(-120, 75, -250); scene.add(sunDisk); geometries.push(sunDisk.geometry); materials.push(sunDisk.material);
   const gun = new THREE.Group();
   const gunPart = (m: THREE.Material, x: number, y: number, z: number, w: number, h: number, d: number) => { const mesh = new THREE.Mesh(roundedGeo, m); mesh.position.set(x, y, z); mesh.scale.set(w, h, d); gun.add(mesh); };
-  gunPart(navy, 0, 0, 0, .13, .13, .4); gunPart(metal, 0, .04, -.2, .1, .09, .18); gunPart(orange, 0, .105, -.05, .025, .018, .25); gunPart(rubber, 0, -.1, .08, .09, .2, .1); gunPart(metal, 0, .1, -.15, .08, .025, .08);
-  for (let i = 0; i < 3; i++) { const ring = new THREE.Mesh(cylGeo, i === 1 ? orange : metal); ring.rotation.x = Math.PI / 2; ring.position.set(0, .04, -.2 - i * .045); ring.scale.set(.065, .025, .065); gun.add(ring); }
-  const glove = new THREE.Mesh(roundedGeo, rubber); glove.scale.set(.115, .14, .17); glove.rotation.x = -.25; glove.position.set(.025, -.13, .11); gun.add(glove);
+  gunPart(navy, 0, 0, 0, .20, .15, .31);
+  gunPart(metal, 0, -.02, -.13, .25, .10, .14);
+  gunPart(orange, 0, .075, .025, .19, .029, .16);
+  gunPart(rubber, 0, -.12, .05, .116, .19, .15);
+  gunPart(metal, 0, .096, -.018, .105, .025, .18);
+  const charge = new THREE.MeshBasicMaterial({ color: '#82e6ff' });
+  materials.push(charge);
+  for (const side of [-1, 1]) {
+    gunPart(metal, side * .08, .046, -.17, .042, .10, .2);
+    gunPart(charge, side * .082, .092, -.17, .021, .022, .16);
+  }
+  const lens = new THREE.Mesh(cylGeo, charge);
+  lens.rotation.x = Math.PI / 2; lens.position.set(0, .04, -.215); lens.scale.set(.042, .04, .042); gun.add(lens);
+  const glove = new THREE.Mesh(roundedGeo, rubber);
+  glove.scale.set(.14, .15, .21); glove.rotation.x = -.25; glove.position.set(.025, -.15, .11); gun.add(glove);
   gun.position.set(.28, -.28, -.55); camera.add(gun); scene.add(camera);
-  let disposed = false, environment: THREE.WebGLRenderTarget | null = null;
-  pending.push(new Promise<void>(resolve => {
-    new HDRLoader().load('/game/exposed/textures/industrial_sunset_02_1k.hdr', texture => {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      if (!disposed) { const pmrem = new THREE.PMREMGenerator(renderer); environment = pmrem.fromEquirectangular(texture); scene.environment = environment.texture; scene.environmentIntensity = .55; scene.background = texture; scene.backgroundIntensity = .65; scene.backgroundBlurriness = .06; textures.push(texture); pmrem.dispose(); }
-      else texture.dispose(); resolve();
-    }, undefined, () => resolve());
-  }));
-  return { bounds, beacons, drones, gun, sun, ready: Promise.all(pending).then(() => undefined), dispose: () => { disposed = true; environment?.dispose(); textures.forEach(t => t.dispose()); materials.forEach(m => m.dispose()); geometries.forEach(g => g.dispose()); } };
+  return {
+    bounds, beacons, drones, gun, sun, charge,
+    dispose: () => {
+      textures.forEach(texture => texture.dispose());
+      materials.forEach(item => item.dispose());
+      geometries.forEach(geometry => geometry.dispose());
+    },
+  };
 }

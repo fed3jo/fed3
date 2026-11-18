@@ -14,6 +14,7 @@ test('manager publishes a new app through real API and current templates; editor
   await expect(page.getByRole('heading',{name:'التطبيقات',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'استيراد التطبيقات الحالية',exact:true}).click();
   await expect(page.getByRole('button',{name:/Signal.*منشور/})).toBeVisible();
+  expect((await page.request.get('/ar/alternatives/')).ok()).toBe(true);
   const fixtureDoc=structuredClone(seedDocuments[0]);
   fixtureDoc.id='fixture-new-app';fixtureDoc.name='Fixture App';fixtureDoc.sortOrder=0;
   fixtureDoc.description={ar:'تطبيق جديد منشور من لوحة الإدارة',en:'A new app published from the dashboard'};

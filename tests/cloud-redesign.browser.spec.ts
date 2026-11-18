@@ -22,35 +22,42 @@ test('cloud introduction shares the site composition and respects reduced motion
   expect(errors).toEqual([]);
 });
 
-test('access modes and expandable technical details remain usable', async ({ page }) => {
+test('the sample file shows the server and separate backup before the install tutorial', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const locale of ['ar', 'en']) {
     await page.goto(`/${locale}/home-cloud/`);
+    const flow = page.locator('#cloud-flow');
+    const story = flow.locator('[data-file-phase]');
+    await story.getByRole('button').click();
+    await expect(story).toHaveAttribute('data-file-phase', '2');
+    await story.getByRole('button').click();
+    await expect(story).toHaveAttribute('data-file-phase', '3');
+    await expect(story.getByRole('status')).toContainText(locale === 'ar' ? 'قرص منفصل' : 'separate drive');
+    await flow.locator('summary').click();
     const modes = page.getByRole('group', { name: locale === 'ar' ? 'طريقة الوصول' : 'Access method' });
     for (let i = 0; i < 3; i++) {
       await modes.getByRole('button').nth(i).click();
       await expect(modes.getByRole('button').nth(i)).toHaveAttribute('aria-pressed', 'true');
     }
-    await expect(page.locator('#cloud-flow [role="status"]')).toContainText('HTTPS');
-    const hardware = page.locator('[data-cloud-requirements] details');
-    await expect(hardware).not.toHaveAttribute('open');
-    await hardware.locator('summary').click();
-    await expect(hardware.locator('table')).toBeVisible();
-    await expect(hardware.locator('table')).toContainText('4 GB RAM');
-    const steps = page.locator('#cloud-steps ol>li');
-    await expect(steps).toHaveCount(6);
-    await expect(steps.nth(4).locator('details p')).toBeHidden();
-    await steps.nth(4).locator('summary').click();
-    await expect(steps.nth(4).locator('details p')).toContainText(locale === 'ar' ? 'قاعدة البيانات' : 'database');
-    await expect(steps.nth(4).locator('a')).toHaveAttribute('href', /maintenance\/backup/);
+    await expect(flow.locator('details [role="status"]')).toContainText('HTTPS');
+    const hardware = page.locator('[data-cloud-requirements] table');
+    await expect(hardware).toBeVisible();
+    await expect(hardware).toContainText('2 GB RAM');
+    await expect(hardware).toContainText('4 GB RAM');
+    const steps = page.locator('#cloud-trial ol>li');
+    await expect(steps).toHaveCount(5);
+    await steps.nth(1).getByRole('button').click();
+    await expect(page.locator('#cloud-trial code')).toContainText(['sudo apt update', 'sudo snap install nextcloud', 'snap changes nextcloud']);
+    await steps.nth(3).getByRole('button').click();
+    await expect(page.locator('#cloud-trial img')).toHaveAttribute('src', /nextcloud-upload\.webp$/);
     const daily = page.locator('[data-cloud-daily] details');
     await expect(daily).toHaveCount(5);
+    await page.locator('details:has(> [data-cloud-daily]) > summary').click();
     await daily.nth(2).locator('summary').click();
     await expect(daily.nth(2).locator('p')).toBeVisible();
-    const readiness = page.locator('#cloud-readiness>details');
-    await expect(readiness).not.toHaveAttribute('open');
-    await readiness.locator(':scope>summary').click();
-    await expect(readiness).toHaveAttribute('open', '');
+    await page.locator('[data-cloud-guide-hero] a[href="#cloud-readiness"]').click();
+    await expect(page.locator('#cloud-readiness')).toBeFocused();
+    await expect(page).toHaveURL(/#cloud-readiness$/);
   }
 });
 
@@ -67,7 +74,7 @@ test('cloud layouts fit small screens and section links focus their targets', as
       await page.locator('#cloud-navigation a[href="#cloud-readiness"]').click();
       await expect(page.locator('#cloud-readiness')).toBeFocused();
       await expect(page.getByRole('button', { name: locale === 'ar' ? 'التنقّل' : 'Navigation', exact: true })).toHaveAttribute('aria-expanded', 'false');
-      await page.locator('[data-cloud-requirements] details>summary').click();
+      await expect(page.locator('[data-cloud-requirements] table')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
   }

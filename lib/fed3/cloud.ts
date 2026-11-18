@@ -13,7 +13,7 @@ export const cloudSources = {
 
 export const cloudCopy = {
   ar: {
-    nav: ['الفكرة', 'كيف تشتغل؟', 'خطوات التجهيز', 'الجاهزية'],
+    nav: ['عن الخدمة', 'مسار الملفات', 'مواصفات الجهاز', 'استبيان الجاهزية', 'جرّبوا Nextcloud'],
     eyebrow: 'المحطة 02 / السحابة المحلية', title: 'سحابة داخل مؤسستك.', accent: 'وملفاتكم بإيدكم.',
     lead: 'مساحة خاصة لحفظ الملفات ومشاركتها على جهاز مستقل داخل المؤسسة. نبدأ بفهم احتياجكم، ثم تجهيز الجهاز والصلاحيات والنسخ الاحتياطي، وتدريب الكادر على الاستخدام والإدارة.',
     explore: 'شوف كيف بتشتغل', survey: 'استبيان الجاهزية', soon: 'معاينة فقط',
@@ -35,7 +35,7 @@ export const cloudCopy = {
     nodes: [['platforms', 'أجهزة الفريق', 'رفع ومزامنة'], ['network', 'شبكة المؤسسة', 'اتصال بين الأجهزة'], ['control', 'خادمكم المحلي', 'ملفات وحسابات'], ['backup', 'نسخة مستقلة', 'استعادة عند الحاجة']],
     accessLabels: ['نفس الشبكة', 'أجهزة محددة', 'نطاق وHTTPS'],
     responsibility: 'التحكّم والمسؤولية مع بعض.', responsibilityText: 'الجهاز عندكم، ومسؤول الخادم عنده صلاحيات واسعة. اتفقوا على حدود وصوله، والتحديثات، والنسخ، والتعامل مع الأعطال.',
-    steps: 'من الجاهزية لأول ملف.', stepsLead: 'ست خطوات مع المسؤول التقني. البداية بمجلد تجريبي وملفات غير حساسة.',
+    steps: 'كيف تجهّزوا السحابة؟', stepsLead: 'امشوا مع المسؤول التقني خطوة بخطوة. ابدأوا بمجلد تجريبي وملفات غير حساسة.',
     setup: [
       ['افهموا الاحتياج', 'حدّدوا عدد المستخدمين والملفات المراد حفظها، ومين رح يتابع الخدمة. اتفقوا على الوصول والدعم ومسؤوليات كل طرف.', 'المخرج: احتياج واضح ومسؤول معروف'],
       ['افحصوا الجهاز والشبكة', 'راجعوا سلامة الحاسوب والقرص والمساحة والتهوية والطاقة. خصصوا وجهة نسخ منفصلة، وافحصوا استقرار الشبكة.', 'المخرج: جهاز وبيئة مناسبين للتجربة'],
@@ -56,14 +56,14 @@ export const cloudCopy = {
       ['مين بقدر يقرأ الملفات؟', 'هذا يعتمد على الحسابات والصلاحيات ونوع التشفير. مدير الخادم عنده صلاحيات تشغيل واسعة؛ وضّحوا حدود الوصول قبل الاستخدام. التخزين المحلي وحده مش ضمان للخصوصية.'],
       ['هل التجهيز بدون تكلفة؟', 'البرمجية مفتوحة المصدر، لكن الجهاز والتخزين والطاقة والنسخ ووقت الصيانة والدعم إلها تكلفة. تحديدها بيبدأ بفهم الاحتياج.'],
     ],
-    readinessTitle: 'هل مؤسستكم جاهزة للخطوة؟', readinessLead: 'عرّفونا على احتياجكم التقني والإداري. الإرسال لطلب المراجعة، وما بأكّد قبولًا أو موعد تجهيز.',
+    readinessTitle: 'استبيان جاهزية المؤسسة', readinessLead: 'إذا بتنسّقوا لمؤسسة أو لمركز مجتمعي، عبّوا الاستبيان حتى يراجع فريق المبادرة احتياجكم للتجربة.',
     previewNote: 'معاينة فقط. إجاباتك لا تُرسل ولا تُحفظ، وتختفي عند مغادرة الصفحة أو تحديثها.',
     surveyGroups: ['عن المؤسسة', 'الجاهزية التقنية', 'الدعم والمتابعة'], next: 'القسم التالي', back: 'السابق', submit: 'الإرسال غير متاح بالمعاينة', preview: 'معاينة الاستبيان', optional: 'اختياري',
     multi: 'يمكن اختيار أكثر من إجابة', progress: 'القسم', of: 'من',
     footer: 'السحابة المحلية / Fed3', returnHome: 'العودة إلى الرئيسية', alternatives: 'استكشف البدائل', sourceLabel: 'مراجع التجهيز',
   },
   en: {
-    nav: ['The idea', 'How it works', 'Setup steps', 'Readiness'],
+    nav: ['About the service', 'File flow', 'Hardware specs', 'Readiness survey', 'Try Nextcloud'],
     eyebrow: 'CHAPTER 02 / LOCAL CLOUD', title: 'A cloud inside your organization.', accent: 'Your files, in your hands.',
     lead: 'A private space for storing and sharing files on independent hardware inside your organization. Start with your needs, then prepare the device, access controls and backups, and train the team to use and manage it.',
     explore: 'See how it works', survey: 'Readiness survey', soon: 'Preview only', ownership: 'Each organization runs its own independent device.', signature: 'Control the location. Understand the responsibility.',
@@ -76,7 +76,7 @@ export const cloudCopy = {
     nodes: [['platforms', 'Team devices', 'Upload & sync'], ['network', 'Your network', 'Device connections'], ['control', 'Your local server', 'Files & accounts'], ['backup', 'Separate backup', 'Recovery when needed']],
     accessLabels: ['Same network', 'Selected devices', 'Domain & HTTPS'],
     responsibility: 'Control comes with responsibility.', responsibilityText: 'Your hardware, with a responsible administrator. Agree on their access limits, updates, backups and incident response.',
-    steps: 'From readiness to your first file.', stepsLead: 'Six steps with your technical lead. Start with a test folder and non-sensitive files.',
+    steps: 'How to set up your cloud', stepsLead: 'Work through these steps with your technical lead. Start with a test folder and non-sensitive files.',
     setup: [
       ['Understand the need', 'Define users, files and the person who will maintain the service. Agree on access, support and responsibilities.', 'Outcome: clear needs and a named owner'],
       ['Check hardware and network', 'Check the computer, drive, space, cooling and power. Allocate a separate backup destination and check network stability.', 'Outcome: hardware and a suitable test environment'],
@@ -93,7 +93,7 @@ export const cloudCopy = {
       ['Who can read the files?', 'It depends on accounts, permissions and encryption. Administrators have broad operational access. Define its limits before use; local storage alone does not guarantee privacy.'],
       ['Is setup free?', 'The software is open source. Hardware, storage, power, backup, maintenance and support still have costs. Assess your needs first.'],
     ],
-    readinessTitle: 'Is your organization ready?', readinessLead: 'Tell us about your technical and administrative needs. Submission requests a review; it does not confirm acceptance or a setup date.',
+    readinessTitle: 'Organization readiness survey', readinessLead: 'If you coordinate for an organization or community center, complete the survey so our team can review what you need for a trial.',
     previewNote: 'Preview only. Answers are never sent or saved and disappear when you leave or refresh the page.',
     surveyGroups: ['Your organization', 'Technical readiness', 'Support & maintenance'], next: 'Next section', back: 'Previous', submit: 'Submission unavailable in preview', preview: 'Survey preview', optional: 'Optional', multi: 'Choose all that apply', progress: 'Section', of: 'of',
     footer: 'Local Cloud / Fed3', returnHome: 'Back to home', alternatives: 'Explore alternatives', sourceLabel: 'Setup references',
@@ -123,4 +123,4 @@ export const cloudSurvey: SurveyField[][] = [
   ],
 ];
 
-export const cloudNav = (locale: Locale) => ['cloud-overview', 'cloud-flow', 'cloud-steps', 'cloud-readiness'].map((id, i) => ({ id, label: cloudCopy[locale].nav[i] }));
+export const cloudNav = (locale: Locale) => ['cloud-overview', 'cloud-flow', 'cloud-requirements', 'cloud-readiness', 'cloud-trial'].map((id, i) => ({ id, label: cloudCopy[locale].nav[i] }));

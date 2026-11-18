@@ -99,10 +99,14 @@ test('checkpoint restore keeps choices and location sharing can be stopped', asy
   await expect.poll(async () => (await position(page)).x).toBeCloseTo(13, 1);
   await expect.poll(async () => (await position(page)).z).toBeCloseTo(-39, 1);
   await expect(page.locator('[data-navigation]')).toHaveAttribute('data-sharing', 'true');
+  const map = page.locator('[data-location-trace]');
+  await expect(map).toHaveAttribute('data-location-trace', 'recorded', { timeout: 15_000 });
   await page.locator('[data-navigation]').click();
   await expect(page.locator('[data-navigation]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(map).toHaveAttribute('data-location-trace', 'last');
   await expect(game(page)).toContainText('آخر نقطة معروفة ما زالت عندهم');
   await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).choices.navigation, SAVE_KEY)).toBe(false);
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).signals, SAVE_KEY)).toBeGreaterThan(0);
   await page.locator('[data-pause]').click();
   await expect(game(page)).toHaveAttribute('data-mode', 'paused');
   await close(page);

@@ -7,6 +7,7 @@ test('compact image cards have decoded artwork, product cases, and working detai
   for (const locale of ['ar', 'en']) {
     await page.goto(`/${locale}/#privacy-files`);
     const section = page.locator('[data-privacy-files]');
+    await expect(section.getByRole('heading', { name: locale === 'ar' ? 'وين بتروح بياناتك؟' : 'Where does your data go?', exact: true })).toBeVisible();
     const carousel = page.locator('[data-privacy-carousel]');
     await carousel.scrollIntoViewIfNeeded();
     const current = carousel.locator('article[aria-hidden=false]');

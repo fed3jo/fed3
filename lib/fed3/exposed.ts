@@ -36,7 +36,7 @@ export function streetRoute(stage: number, from: Point): Point[] {
   route.push({ x: 0, z: destination.z }, { x: destination.x, z: destination.z });
   return route;
 }
-export type SavedRun = { version: 1; stage: number; choices: Choices; seconds: number; pulses: number };
+export type SavedRun = { version: 1; stage: number; choices: Choices; seconds: number; pulses: number; signals?: number };
 export function readRun(raw: string | null): SavedRun | null {
   if (!raw) return null;
   try {
@@ -46,15 +46,19 @@ export function readRun(raw: string | null): SavedRun | null {
       !Number.isFinite(s.seconds) || s.seconds < 0 || s.seconds > 86400 ||
       !Number.isInteger(s.pulses) || s.pulses < 0 || s.pulses > 100000) return null;
     if ((s.stage === 0 && (s.choices.contacts || s.choices.cloud)) || (s.stage < 3 && s.choices.cloud) || (s.stage < 2 && s.choices.contacts)) return null;
-    return { version: 1, stage: s.stage, choices: { navigation: s.choices.navigation, contacts: s.choices.contacts, cloud: s.choices.cloud }, seconds: s.seconds, pulses: s.pulses };
+    const signals = Number.isSafeInteger(s.signals) && s.signals > 0 && s.signals <= 30_000 ? s.signals : undefined;
+    return { version: 1, stage: s.stage, choices: { navigation: s.choices.navigation, contacts: s.choices.contacts, cloud: s.choices.cloud }, seconds: s.seconds, pulses: s.pulses, ...(signals ? { signals } : {}) };
   } catch { return null; }
 }
 export function inside(point: Point, b: Bounds, radius = 0): boolean {
   return Math.abs(point.x - b.x) < b.w / 2 + radius && Math.abs(point.z - b.z) < b.d / 2 + radius;
 }
 export function segmentBlocked(a: Point, b: Point, bounds: Bounds[], eyeHeight = 1.2): boolean {
+  const left = Math.min(a.x, b.x), right = Math.max(a.x, b.x);
+  const front = Math.min(a.z, b.z), back = Math.max(a.z, b.z);
   return bounds.some(box => {
-    if (box.height < eyeHeight) return false;
+    if (box.height < eyeHeight || box.x + box.w / 2 < left || box.x - box.w / 2 > right ||
+      box.z + box.d / 2 < front || box.z - box.d / 2 > back) return false;
     let low = 0, high = 1;
     for (const [start, delta, min, max] of [
       [a.x, b.x - a.x, box.x - box.w / 2, box.x + box.w / 2],

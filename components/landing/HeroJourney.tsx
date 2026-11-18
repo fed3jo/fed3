@@ -28,8 +28,8 @@ export function HeroJourney({ locale, clipId, media = heroJourneyVideo, label, r
     let settleTimer = 0;
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
     const syncPreferences = () => {
-      setCompact(innerWidth <= 900 || hasConstrainedConnection());
-      setReduced(motion.matches);
+      setCompact(innerWidth <= 900);
+      setReduced(motion.matches || hasConstrainedConnection());
     };
     const syncVisibility = () => setPageVisible(!document.hidden);
     const onScroll = () => {

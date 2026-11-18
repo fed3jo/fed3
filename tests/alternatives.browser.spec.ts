@@ -4,6 +4,10 @@ test('the streamlined app showcase and all five comparisons keep matching guides
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/ar/alternatives/');
+  await page.getByRole('link', { name: 'العب مكشوف', exact: true }).click();
+  await expect(page).toHaveURL(/#game$/);
+  await expect(page.locator('#game')).toBeFocused();
+  await expect(page.locator('[data-exposed-game]')).toHaveCount(0);
   await expect(page.locator('[data-showcase-card]')).toHaveCount(1);
   await expect(page.locator('[data-app-showcase] button[aria-pressed]')).toHaveCount(5);
   await expect(page.locator('[data-comparison-group]')).toHaveCount(4);

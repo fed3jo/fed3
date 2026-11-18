@@ -81,3 +81,17 @@
   .game[data-touch=true] .bottomHud{bottom:116px}
   .game[data-touch=true] .map{display:none}
 }
+.mapLegend{list-style:none;padding:0;margin:3px 0 0;display:grid;gap:3px;font-size:10px;color:#f5eddb}
+.mapLegend li{display:flex;align-items:center;gap:5px}
+.mapLegend li:first-child span{color:#ffba74}
+.mapLegend li:last-child span{color:#ff8b9c}
+.lastSignal{font-size:10px;color:#ffba74;margin:5px 0 0}
+.resultStats>div{position:relative;align-content:start}
+.resultStats>div+div{border-inline-start:1px dashed #f3ba8070;padding-inline-start:10px}
+.resultStats>div>svg{width:21px;height:21px;color:#ffba74}
+@media(max-width:760px){.mapLegend,.lastSignal{font-size:8px}}
+@media(max-width:560px) and (orientation:portrait){
+  .game[data-stage="0"][data-touch=true] .map canvas{height:58px}
+  .game[data-stage="0"][data-touch=true] .mapLegend,
+  .game[data-stage="0"][data-touch=true] .inventory{display:none}
+}

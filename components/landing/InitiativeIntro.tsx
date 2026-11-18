@@ -9,7 +9,7 @@ import styles from './home-intro.module.css';
 
 const divider = 'M430 0 C411 22 443 38 423 65 C407 90 441 116 422 145 C403 175 445 204 420 234 C396 260 367 277 376 310 C381 340 348 382 327 411 C301 446 278 459 246 460 C214 461 192 501 172 523 C149 550 124 560 102 578 C74 600 39 609 0 588';
 
-export function InitiativeIntro({ locale, messages, ready, explore, identity, visual, variant = 'initiative', reduceMotion = false }: { locale: Locale; messages: Messages; ready: boolean; explore: (station?: Station) => void; identity?: ReactNode; visual?: ReactNode; variant?: 'initiative' | 'alternatives' | 'cloud'; reduceMotion?: boolean }) {
+export function InitiativeIntro({ locale, messages, ready, explore, identity, visual, secondaryAction, variant = 'initiative', reduceMotion = false }: { locale: Locale; messages: Messages; ready: boolean; explore: (station?: Station) => void; identity?: ReactNode; visual?: ReactNode; secondaryAction?: { href: string; label: string }; variant?: 'initiative' | 'alternatives' | 'cloud'; reduceMotion?: boolean }) {
   const ar = locale === 'ar';
   const alternatives = variant === 'alternatives';
   const cloud = variant === 'cloud';
@@ -31,7 +31,10 @@ export function InitiativeIntro({ locale, messages, ready, explore, identity, vi
     <div className={styles.stage}>
       <div className={styles.overview} dir={ar ? 'rtl' : 'ltr'}>
         {identity ?? <InitiativeIdentity locale={locale} ready={ready} />}
-        <div className={styles.exploreWrap}><button className={styles.explore} onClick={() => explore(cloud ? 'home-cloud' : 'alternatives')}><span>{cloud ? ar ? 'اكتشف السحابة' : 'Explore local cloud' : alternatives ? ar ? 'استكشف التطبيقات' : 'Explore the apps' : ar ? 'استكشف المحطات' : 'Explore the stations'}</span><span aria-hidden="true">{ar ? '↙' : '↘'}</span></button><span className={styles.scrollHint}>{messages.scroll}</span></div>
+        <div className={styles.exploreWrap}>
+          <button className={styles.explore} onClick={() => explore(cloud ? 'home-cloud' : 'alternatives')}><span>{cloud ? ar ? 'اكتشف السحابة' : 'Explore local cloud' : alternatives ? ar ? 'استكشف التطبيقات' : 'Explore the apps' : ar ? 'استكشف المحطات' : 'Explore the stations'}</span><span aria-hidden="true">{ar ? '↙' : '↘'}</span></button>
+          {secondaryAction ? <a className={styles.secondaryAction} href={secondaryAction.href}>{secondaryAction.label}<span aria-hidden="true">↓</span></a> : <span className={styles.scrollHint}>{messages.scroll}</span>}
+        </div>
       </div>
     </div>
     <div className={styles.bottom}>

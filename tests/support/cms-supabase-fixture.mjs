@@ -13,7 +13,7 @@ if(process.env.CMS_FIXTURE_ENGAGEMENT==='1'){
   const {seedDocuments}=await import('../../lib/cms/seed.ts');
   await db.query(`insert into eng_forms(id,draft,published_version) values('local-cloud',$1,1)`,[JSON.stringify(initialForm)]);
   await db.query(`insert into eng_form_versions(form_id,version,definition) values('local-cloud',1,$1)`,[JSON.stringify(initialForm)]);
-  for(const doc of seedDocuments)await db.query(`insert into cms_apps(id,draft,published) values($1,$2,$2)`,[doc.id,JSON.stringify(doc)]);
+  for(const doc of seedDocuments)await db.query(`insert into cms_apps(id,draft,published,position) values($1,$2,$2,$3)`,[doc.id,JSON.stringify(doc),doc.sortOrder]);
 }
 await db.query(`insert into cms_staff(user_id,email,role) values($1,'manager@example.test','manager'),($2,'editor@example.test','editor')`,[manager,editor]);
 const user=id=>({id,aud:'authenticated',role:'authenticated',email:id===manager?'manager@example.test':'editor@example.test',email_confirmed_at:new Date().toISOString(),app_metadata:{provider:'email'},user_metadata:{},created_at:new Date().toISOString()});

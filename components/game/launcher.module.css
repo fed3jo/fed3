@@ -38,3 +38,7 @@
 @media(prefers-reduced-motion:reduce){.loading span,.drone{animation:none}.start{transition:none}.start:hover{transform:none}}
 
 .note a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; text-decoration: underline; text-underline-offset: 4px; }
+.loadingDialog{position:fixed;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#071c2e;color:#fff3e2}
+.loadingDialog .loading{position:absolute;z-index:0;pointer-events:none}
+.loadingDialog>button{position:absolute;inset-inline-start:50%;bottom:15%;translate:-50% 0;border:1px solid #f4b987;border-radius:6px;padding:9px 18px;min-height:44px;color:#fff3e2;background:#123250;font-size:14px}
+.loadingDialog:dir(rtl)>button{translate:50% 0}

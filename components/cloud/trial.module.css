@@ -1,0 +1,30 @@
+.trial{margin-top:12px;padding:clamp(16px,4vw,42px);background:#fffaf1;border:1px solid #06275925;border-radius:22px}
+.heading{display:flex;justify-content:space-between;align-items:start;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+.heading h2{margin:0;font-size:clamp(25px,3.1vw,40px);font-weight:500;line-height:1.45}
+.heading mark{color:#572478;background:#ffe4bd;padding-inline:4px}
+.heading p,.detail p{color:#4d5a69;font-size:14px;line-height:1.8;margin:8px 0}
+.heading a,.links a{display:inline-flex;align-items:center;min-height:44px;color:#562474;text-decoration:underline;text-underline-offset:4px;font-size:13px}
+.workspace{display:grid;grid-template-columns:minmax(180px,.42fr) minmax(0,1fr);gap:clamp(12px,3vw,28px)}
+.steps{display:grid;align-content:start;gap:6px;list-style:none;padding:0;margin:0}
+.steps button{width:100%;display:flex;align-items:center;gap:10px;padding:8px;min-height:47px;text-align:start;border:1px solid transparent;border-radius:10px;font-size:14px}
+.steps button bdi{display:grid;place-items:center;background:#efe5ef;color:#562474;width:28px;height:28px;flex:none;border-radius:50%}
+.steps button[aria-current]{background:#ede4f0;border-color:#56247448}
+.steps button[aria-current] bdi{background:#562474;color:white}
+.detail{min-width:0;border:1px solid #06275922;padding:clamp(13px,2vw,25px);border-radius:12px;background:#fffdfa}
+.detail h3{margin:0;font-size:clamp(19px,2vw,27px);font-weight:600}
+.detail .position{margin:0 0 4px;font-size:12px;color:#562474}
+.detail figure{margin-top:13px}
+.detail img{max-height:245px}
+.commands{padding:9px 13px;border-radius:10px;background:#08234c;color:#fff4e7}
+.commands pre{font-size:13px;line-height:1.6;margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+.links{display:flex;flex-wrap:wrap;gap:4px 16px}
+.buttons{display:flex;flex-wrap:wrap;gap:8px}
+.buttons button{min-height:44px;padding:6px 12px;border-radius:8px;border:1px solid #56247460;color:#562474;font-size:13px}
+.buttons button:last-child{background:#562474;color:white}
+.buttons button:disabled{opacity:.47;cursor:default}
+@media(max-width:720px){
+  .workspace{grid-template-columns:1fr}
+  .steps{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+  .steps button{justify-content:center;min-height:44px;padding:4px}
+  .steps button span{display:none}
+}

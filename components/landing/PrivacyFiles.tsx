@@ -13,14 +13,14 @@ const companies: PrivacyCompany[] = ['meta', 'google', 'microsoft'];
 const cases = privacyCases.filter(file => file.kind === 'case');
 const copy = {
   ar: {
-    eyebrow: 'ملفات موثّقة', title: 'فضائح الخصوصية.', intro: 'القصة باختصار. والتفاصيل مع الدليل.',
+    eyebrow: 'قضايا موثّقة', title: 'وين بتروح بياناتك؟', intro: 'قضايا حقيقية بتوضح كيف تعاملت التطبيقات مع بيانات الناس. افتح أي ملف واقرأ القصة ومصادرها.',
     all: 'الكل', next: 'الملف التالي', previous: 'الملف السابق', pause: 'إيقاف التبديل التلقائي', play: 'تشغيل التبديل التلقائي',
     carousel: 'قضايا الخصوصية', details: 'القصة والدليل', jump: 'اعرض الملف',
     policyEyebrow: 'قبل ما توافق', policyTitle: 'شو بتسمح سياسة الخصوصية؟', policyLink: 'افهم السياسة',
     fine: 'القيمة والحالة بحسب المصدر. التفاصيل داخل كل ملف.',
   },
   en: {
-    eyebrow: 'DOCUMENTED FILES', title: 'Privacy scandals.', intro: 'The short story. The evidence one click away.',
+    eyebrow: 'DOCUMENTED CASES', title: 'Where does your data go?', intro: 'Real cases show how apps handled people’s data. Open a case to read what happened and see the sources.',
     all: 'All', next: 'Next file', previous: 'Previous file', pause: 'Pause automatic rotation', play: 'Start automatic rotation',
     carousel: 'Privacy cases', details: 'Story and evidence', jump: 'Show file',
     policyEyebrow: 'BEFORE YOU AGREE', policyTitle: 'What does the privacy policy allow?', policyLink: 'Understand the policy',

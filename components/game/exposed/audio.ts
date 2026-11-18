@@ -97,7 +97,12 @@ export class GameAudio {
       if (this.context.state !== 'running' || now - this.lastType < .045) return;
       this.lastType = now; this.note(650 + Math.random() * 240, .035, now, .025, 'triangle'); return;
     }
-    if (kind === 'pulse') { this.hiss(.18, now, .18); this.note(680, .23, now, .32, 'sawtooth', 55); }
+    if (kind === 'pulse') {
+      this.note(94, .14, now, .22, 'sine', 38);
+      this.note(920, .18, now + .008, .15, 'triangle', 170);
+      this.hiss(.16, now + .018, .12);
+      this.note(440, .14, now + .09, .075, 'sine', 115);
+    }
     if (kind === 'hit' || kind === 'caught') { this.hiss(.15, now, .12); this.note(110, .2, now, kind === 'caught' ? .6 : .16, 'triangle', 38); }
     if (kind === 'jump') this.note(150, .07, now, .12, 'sine', 280);
     if (kind === 'station' || kind === 'win') {

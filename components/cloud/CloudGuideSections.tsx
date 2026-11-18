@@ -8,10 +8,31 @@ import { CloudScreenshot } from './CloudScreenshot';
 
 export function CloudRequirements({ locale }: { locale: Locale }) {
   const c = cloudGuideCopy[locale];
-  return <section className={`${styles.requirements} ${redesign.requirements}`} aria-labelledby="cloud-requirements-heading" data-cloud-requirements>
-    <div className={styles.sectionHead}><div><p className={styles.eyebrow}>{c.hardwareKicker}</p><h2 id="cloud-requirements-heading">{c.hardwareTitle}</h2></div><p>{locale === 'ar' ? <>عمر الجهاز مش المقياس. <mark>افحصوا حالته قبل الاعتماد عليه.</mark> الأرقام التالية لتجربة صغيرة من الدليل.</> : <>Age isn't the measure. <mark>Check the hardware before relying on it.</mark> These figures are for the guide's small trial.</>}</p></div>
-    <div className={redesign.specs}>{[['2 GB','RAM',locale === 'ar' ? 'ذاكرة للتجربة' : 'Trial memory'],['64-bit','CPU',locale === 'ar' ? 'معالج متوافق' : 'Compatible processor'],['128 GB','STORAGE',locale === 'ar' ? 'مساحة البداية، ويفضل SSD' : 'Trial storage, preferably SSD']].map(([value,label,description]) => <div key={label}><span>{label}</span><strong dir="ltr">{value}</strong><p>{description}</p></div>)}</div>
-    <div className={styles.hardwareGrid}><div className={styles.tableWrap}><details className={redesign.hardwareDetails}><summary>{locale === 'ar' ? 'قارنوا البداية بالخيار الموصى به في الدليل' : "Compare the trial with the guide's recommendation"}<span aria-hidden="true">+</span></summary><p className={styles.systemNote}>{c.hardwareLead}</p><table><caption className="sr-only">{c.hardwareTitle}</caption><thead><tr>{c.hardwareColumns.map(column => <th key={column} scope="col">{column}</th>)}</tr></thead><tbody>{c.hardwareRows.map(([label,min,recommended]) => <tr key={label}><th scope="row">{label}</th><td><bdi>{min}</bdi></td><td><bdi>{recommended}</bdi></td></tr>)}</tbody></table><p className={styles.systemNote}>{c.systemNote}</p></details><a className={styles.textLink} href={cloudSources.requirements} target="_blank" rel="noopener noreferrer">{c.requirementsLink}<span aria-hidden="true">↗</span></a></div><div className={styles.preparation}>{c.preparation.map(([title,body],i) => <article key={title}><FeatureIcon name={['backup','control','people'][i]} size={23}/><div><h3>{title}</h3><p>{body}</p></div></article>)}</div></div>
+  return <section id="cloud-requirements" tabIndex={-1} className={`${styles.requirements} ${redesign.requirements}`} aria-labelledby="cloud-requirements-heading" data-cloud-requirements>
+    <div className={styles.sectionHead}>
+      <h2 id="cloud-requirements-heading">{c.hardwareTitle}</h2>
+      <p>{c.hardwareLead}</p>
+    </div>
+    <div className={styles.hardwareGrid}>
+      <div className={`${styles.tableWrap} ${redesign.specTable}`}>
+        <table>
+          <caption className="sr-only">{c.hardwareTitle}</caption>
+          <thead><tr>{c.hardwareColumns.map(column => <th key={column} scope="col">{column}</th>)}</tr></thead>
+          <tbody>{c.hardwareRows.map(([label, min, recommended]) => <tr key={label}>
+            <th scope="row">{label}</th><td><bdi>{min}</bdi></td><td><bdi>{recommended}</bdi></td>
+          </tr>)}</tbody>
+        </table>
+        <p className={styles.systemNote}>{c.systemNote}</p>
+        <div className={redesign.specLinks}>
+          <a className={styles.textLink} href={homeCloudGuideUrl} target="_blank" rel="noopener noreferrer">{locale === 'ar' ? 'مواصفات دليل المبادرة' : 'Specs in the initiative guide'}<span aria-hidden="true">↗</span></a>
+          <a className={styles.textLink} href={cloudSources.requirements} target="_blank" rel="noopener noreferrer">{c.requirementsLink}<span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+      <div className={styles.preparation}>{c.preparation.map(([title, body], i) => <article key={title}>
+        <FeatureIcon name={['backup', 'control', 'people'][i]} size={23} />
+        <div><h3>{title}</h3><p>{body}</p></div>
+      </article>)}</div>
+    </div>
   </section>;
 }
 

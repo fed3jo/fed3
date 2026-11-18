@@ -52,7 +52,7 @@ export async function POST(request:Request,context:Context){
       if(input.website)throw new CmsError(400,'تعذّر إرسال النموذج.');const session=ticket(input.token,'form');
       if(Date.now()-session.issued<3000)throw new CmsError(429,'راجع إجاباتك قبل الإرسال.');
       const {data,error}=await serviceClient().from('eng_form_versions').select('definition').eq('form_id','local-cloud').eq('version',session.version!).single();if(error)throw error;
-      const definition=formSchema.parse(data.definition);let answers;try{answers=validateAnswers(definition,input.answers);}catch(e){throw new CmsError(422,e instanceof Error?e.message:'راجع الإجابات.');}
+      const definition=formSchema.parse(data.definition);let answers;try{answers=validateAnswers(definition,input.answers,input.locale);}catch(e){throw new CmsError(422,e instanceof Error?e.message:input.locale==='ar'?'راجع الإجابات.':'Check your answers.');}
       const analysis=analyzeAnswers(definition,answers);const hash=createHash('sha256').update(JSON.stringify({version:session.version,answers,locale:input.locale})).digest('hex');
       return apiResponse(await rpc('eng_submit',{p_id:session.id,p_version:session.version,p_locale:input.locale,p_answers:answers,p_analysis:analysis,p_hash:hash}));
     }
